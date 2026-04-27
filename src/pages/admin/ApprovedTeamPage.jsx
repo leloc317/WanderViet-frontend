@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
-import approvedTeamService from "../../services/approvedTeam.service";
+import approvedTeamService from "../../services/approvedteam.service";
 import {
   Table, StatusBadge, Badge, Button, Modal,
   FormField, Input, Textarea, PageHeader,
