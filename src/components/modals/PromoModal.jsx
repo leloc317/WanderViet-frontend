@@ -77,10 +77,10 @@ export default function PromoModal({ user }) {
           <div className="relative">
             <div className="text-3xl mb-2">🎁</div>
             <h3 className="text-white font-bold text-lg leading-tight mb-1">
-              Đăng ký ngay, nhận ưu đãi!
+              Sign up now to enjoy exclusive offers!
             </h3>
             <p className="text-blue-100 text-sm">
-              Thành viên WanderViet được hưởng các khuyến mãi độc quyền
+              WanderViet members get access to special promotions
             </p>
           </div>
         </div>
@@ -91,7 +91,7 @@ export default function PromoModal({ user }) {
             <>
               <p className="text-xs font-semibold text-gray-400 dark:text-slate-500
                             uppercase tracking-wider mb-3">
-                Đang diễn ra
+                Ongoing
               </p>
               <div className="space-y-2.5 mb-5">
                 {discounts.map(d => (
@@ -106,14 +106,14 @@ export default function PromoModal({ user }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                        {d.description || `Giảm ${fmtDiscount(d)}`}
+                        {d.description || `Save ${fmtDiscount(d)}`}
                       </p>
                       <p className="text-xs text-gray-400 dark:text-slate-500">
-                        Mã: <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                        Code: <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
                           {d.code}
                         </span>
                         {d.validUntil && (
-                          <> · HSD {new Date(d.validUntil).toLocaleDateString("vi-VN")}</>
+                          <> · Expires {new Date(d.validUntil).toLocaleDateString("vi-VN")}</>
                         )}
                       </p>
                     </div>
@@ -124,10 +124,10 @@ export default function PromoModal({ user }) {
           ) : (
             <div className="mb-5 space-y-2">
               {[
-                { icon:"💰", text:"Nhận mã giảm giá độc quyền" },
-                { icon:"⭐", text:"Gợi ý địa điểm cá nhân hóa" },
-                { icon:"❤️", text:"Lưu địa điểm yêu thích" },
-                { icon:"📅", text:"Đặt chỗ nhanh chóng, tiện lợi" },
+                { icon:"💰", text:"Get exclusive discount codes" },
+                { icon:"⭐", text:"Personalized recommendations just for you" },
+                { icon:"❤️", text:"Save your favorite places" },
+                { icon:"📅", text:"Easy and seamless booking" },
               ].map(({ icon, text }) => (
                 <div key={text} className="flex items-center gap-3 text-sm
                                            text-gray-700 dark:text-slate-300">
@@ -142,12 +142,12 @@ export default function PromoModal({ user }) {
           <button onClick={handleRegister}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold
                        py-3 rounded-xl text-sm transition-colors mb-2">
-            Đăng ký miễn phí
+            Sign up for free
           </button>
           <button onClick={() => { navigate("/login"); handleDismiss(); }}
             className="w-full text-sm text-gray-500 dark:text-slate-400 py-2
                        hover:text-gray-700 dark:hover:text-slate-200 transition-colors">
-            Đã có tài khoản? Đăng nhập
+            Already have an account? Log in
           </button>
         </div>
       </div>

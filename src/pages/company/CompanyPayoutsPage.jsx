@@ -53,16 +53,16 @@ export default function CompanyPayoutsPage() {
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">Payouts</h1>
         <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-          Lịch sử thanh toán từ WanderViet
+          Payment history from WanderViet
         </p>
       </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
-          { label: "Đã nhận",    value: totalCompleted, color: "text-emerald-600 dark:text-emerald-400" },
-          { label: "Đang chờ",   value: totalPending,   color: "text-amber-600 dark:text-amber-400" },
-          { label: "Đang giữ",   value: totalHeld,      color: "text-red-600 dark:text-red-400" },
+          { label: "Completed",    value: totalCompleted, color: "text-emerald-600 dark:text-emerald-400" },
+          { label: "Pending",   value: totalPending,   color: "text-amber-600 dark:text-amber-400" },
+          { label: "Held",   value: totalHeld,      color: "text-red-600 dark:text-red-400" },
         ].map(s => (
           <div key={s.label} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4">
             <p className="text-xs text-gray-500 dark:text-slate-400 mb-1">{s.label}</p>
@@ -92,9 +92,9 @@ export default function CompanyPayoutsPage() {
       ) : payouts.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-4xl mb-3">💰</p>
-          <p className="font-semibold text-gray-900 dark:text-white mb-1">Chưa có payout nào</p>
+          <p className="font-semibold text-gray-900 dark:text-white mb-1">No payouts available</p>
           <p className="text-sm text-gray-500 dark:text-slate-400">
-            Payout sẽ được tạo sau khi booking hoàn thành
+            Payout will be created after the booking is completed
           </p>
         </div>
       ) : (
@@ -130,7 +130,7 @@ export default function CompanyPayoutsPage() {
                     {/* Released info */}
                     {p.status === "completed" && p.releasedAt && (
                       <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
-                        ✓ Đã nhận {fmtDate(p.releasedAt)}
+                        ✓ Completed {fmtDate(p.releasedAt)}
                         {p.releaseRef && ` · Ref: ${p.releaseRef}`}
                       </p>
                     )}
@@ -160,11 +160,11 @@ export default function CompanyPayoutsPage() {
         <div className="flex justify-center gap-2 mt-6">
           <button onClick={() => fetchPayouts(page - 1)} disabled={page <= 1}
             className="px-4 py-2 rounded-xl text-sm bg-white dark:bg-slate-900 border border-gray-200
-                       dark:border-slate-700 disabled:opacity-40">← Prev</button>
+                       dark:border-slate-700 disabled:opacity-40">Prev</button>
           <span className="self-center text-sm text-gray-500">{page} / {pagination.totalPages}</span>
           <button onClick={() => fetchPayouts(page + 1)} disabled={page >= pagination.totalPages}
             className="px-4 py-2 rounded-xl text-sm bg-white dark:bg-slate-900 border border-gray-200
-                       dark:border-slate-700 disabled:opacity-40">Next →</button>
+                       dark:border-slate-700 disabled:opacity-40">Next</button>
         </div>
       )}
     </div>

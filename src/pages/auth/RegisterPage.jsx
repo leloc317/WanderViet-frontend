@@ -26,6 +26,8 @@ const validateStep1 = (form) => {
     e.email = "Invalid email address";
   if (form.phone && !PHONE_RE.test(form.phone.replace(/\s/g, "")))
     e.phone = "Invalid phone number (e.g. 0912345678)";
+  if (!form.phone)
+    e.phone = "Phone number is required";
   if (!form.password)
     e.password = "Password is required";
   else if (form.password.length < 6)
@@ -65,6 +67,7 @@ function Field({ label, error, required, children }) {
   );
 }
 
+// Fix: focus ring 
 const inputCls = (err) =>
   `w-full bg-gray-50 dark:bg-slate-800 border rounded-xl px-4 py-3 text-sm
    text-gray-900 dark:text-white placeholder-gray-400
@@ -82,10 +85,9 @@ export default function RegisterPage() {
   const [loading,   setLoading]   = useState(false);
   const [showPw,    setShowPw]    = useState(false);
   const [legalModal, setLegalModal] = useState(null);
-  const [emailStatus, setEmailStatus] = useState(""); // "" | "checking" | "taken" | "ok"
+  const [emailStatus, setEmailStatus] = useState("");
   const emailTimer = useRef(null);
 
-  // Debounce email availability check
   const handleEmailChange = (e) => {
     const val = e.target.value;
     setForm({ ...form, email: val });
@@ -99,14 +101,14 @@ export default function RegisterPage() {
         setEmailStatus(data.available ? "ok" : "taken");
       } catch { setEmailStatus(""); }
     }, 600);
-  }; // "terms" | "privacy" | null
+  };
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
   const strength = getStrength(form.password);
 
   const handleStep1 = (e) => {
     e.preventDefault();
-    if (emailStatus === "taken") { setErrors({ email: "This email is already registered" }); return; }
+    if (emailStatus === "taken")    { setErrors({ email: "This email is already registered" }); return; }
     if (emailStatus === "checking") { setErrors({ email: "Please wait while we check your email" }); return; }
     const errs = validateStep1(form);
     if (Object.keys(errs).length) { setErrors(errs); return; }
@@ -142,6 +144,18 @@ export default function RegisterPage() {
 
         {legalModal && <LegalModal type={legalModal} onClose={() => setLegalModal(null)} />}
 
+        {/* Back to Explore */}
+        <div className="mb-4">
+          <Link to="/explore"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600
+                       dark:text-slate-500 dark:hover:text-slate-300 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+            </svg>
+            Back to Explore
+          </Link>
+        </div>
+
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
           <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
@@ -150,14 +164,14 @@ export default function RegisterPage() {
           <span className="font-bold text-gray-900 dark:text-white text-lg">WanderViet</span>
         </div>
 
-        {/* Step indicator */}
+        {/* Step indicator — Fix 2 */}
         <div className="flex items-center gap-2 mb-6 justify-center">
           {[1, 2].map(s => (
             <div key={s} className="flex items-center gap-2">
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors
-                ${s < step  ? "bg-emerald-500 text-white"
+                ${s < step   ? "bg-emerald-500 text-white"
                 : s === step ? "bg-blue-600 text-white"
-                : "bg-gray-200 dark:bg-slate-700 text-gray-400"}`}>
+                :               "bg-gray-200 dark:bg-slate-700 text-gray-400"}`}>
                 {s < step ? "✓" : s}
               </div>
               <span className={`text-xs ${s === step
@@ -190,7 +204,9 @@ export default function RegisterPage() {
                     className={inputCls(errors.name)}/>
                 </Field>
 
-                <Field label="Email" error={errors.email || (emailStatus === "taken" ? "This email is already registered" : "")} required>
+                <Field label="Email"
+                  error={errors.email || (emailStatus === "taken" ? "This email is already registered" : "")}
+                  required>
                   <div className="relative">
                     <input type="email" value={form.email} onChange={handleEmailChange}
                       placeholder="you@example.com"
@@ -208,11 +224,10 @@ export default function RegisterPage() {
                     )}
                   </div>
                 </Field>
-                
 
-                <Field label="Phone number" error={errors.phone}>
+                <Field label="Phone number" error={errors.phone} required>
                   <input type="tel" value={form.phone} onChange={set("phone")}
-                    placeholder="0912 345 678 (optional)"
+                    placeholder="0912 345 678"
                     className={inputCls(errors.phone)}/>
                 </Field>
 
@@ -223,9 +238,17 @@ export default function RegisterPage() {
                       placeholder="At least 6 characters"
                       className={inputCls(errors.password) + " pr-10"}/>
                     <button type="button" onClick={() => setShowPw(!showPw)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2
-                                 text-gray-400 hover:text-gray-600 text-sm">
-                      {showPw ? "🙈" : "👁"}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                      {showPw ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                      )}
                     </button>
                   </div>
                   {form.password && (
@@ -248,6 +271,7 @@ export default function RegisterPage() {
                     className={inputCls(errors.confirmPassword)}/>
                 </Field>
 
+                {/* Fix 3: checkbox + legal links */}
                 <div>
                   <label className="flex items-start gap-2.5 cursor-pointer"
                     onClick={() => setForm({ ...form, agree: !form.agree })}>
@@ -282,6 +306,7 @@ export default function RegisterPage() {
                   </div>
                 )}
 
+                {/* Fix 4: Continue button */}
                 <button type="submit"
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold
                              rounded-xl py-3 text-sm transition-colors">
@@ -291,25 +316,23 @@ export default function RegisterPage() {
 
               <p className="text-center text-sm text-gray-400 dark:text-slate-500 mt-5">
                 Already have an account?{" "}
+                {/* Fix 5: sign in link */}
                 <Link to="/login" className="text-blue-600 font-medium hover:underline">Sign in</Link>
               </p>
 
-              {/* Google */}
               <div className="relative mt-5">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-200 dark:border-slate-700"/>
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="bg-white dark:bg-slate-900 px-4 text-gray-400 text-xs">
-                    or
-                  </span>
+                  <span className="bg-white dark:bg-slate-900 px-4 text-gray-400 text-xs">or</span>
                 </div>
               </div>
               <div className="mt-4">
                 <GoogleSignInButton label="Sign up with Google"
                   onSuccess={(data) => {
                     localStorage.setItem("token", data.token);
-                    navigate(data.isNewUser ? "/explore" : "/explore");
+                    navigate("/explore");
                   }}/>
               </div>
             </div>
@@ -326,14 +349,14 @@ export default function RegisterPage() {
                 <span className="text-gray-400">(Optional)</span>
               </p>
 
+              {/* Fix 6: interest cards selected state */}
               <div className="grid grid-cols-2 gap-2.5 mb-6">
                 {INTERESTS.map(({ key, label, icon, desc }) => {
                   const selected = interests.includes(key);
                   return (
                     <button key={key} type="button"
                       onClick={() => toggleInterest(key)}
-                      className={`flex items-start gap-2.5 p-3 rounded-xl border text-left
-                                  transition-all
+                      className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition-all
                                   ${selected
                                     ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10"
                                     : "border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600"}`}>
@@ -361,7 +384,7 @@ export default function RegisterPage() {
               </div>
 
               {interests.length > 0 && (
-                <p className="text-xs text-blue-600 dark:text-blue-400 text-center mb-4">
+                <p className="text-xs text-blue-600 text-center mb-4">
                   {interests.length} interest{interests.length > 1 ? "s" : ""} selected
                 </p>
               )}
@@ -375,6 +398,7 @@ export default function RegisterPage() {
                              disabled:opacity-50">
                   Skip
                 </button>
+                {/* Fix 7: Get started button */}
                 <button type="button" onClick={() => handleSubmit(false)}
                   disabled={loading}
                   className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white

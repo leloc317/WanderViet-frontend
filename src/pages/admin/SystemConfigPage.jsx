@@ -4,13 +4,13 @@ import { PageHeader, StatCard } from "../../components/ui/Widgets";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const CONFIG_META = {
-  deposit_rate:          { label: "Deposit Rate",            icon: "💰", unit: "%",   factor: 100, color: "amber",  desc: "% đặt cọc khi booking" },
-  commission_rate:       { label: "Commission Rate",         icon: "📊", unit: "%",   factor: 100, color: "purple", desc: "% WanderViet thu từ Company" },
-  hold_duration_minutes: { label: "Hold Duration",           icon: "⏱️",  unit: "min", factor: 1,   color: "blue",   desc: "Thời gian giữ slot booking" },
-  no_show_hours:         { label: "No-Show Hours",           icon: "🚫", unit: "hrs", factor: 1,   color: "red",    desc: "Giờ trước khi auto no_show" },
-  max_booking_per_day:   { label: "Max Bookings / Day",      icon: "📅", unit: "",    factor: 1,   color: "teal",   desc: "Số booking tối đa 1 user/ngày" },
-  at_min_votes:          { label: "AT Min Votes",            icon: "✅", unit: "",    factor: 1,   color: "green",  desc: "Số vote AT tối thiểu để approve" },
-  claim_fee:             { label: "Claim Fee",               icon: "🏷️",  unit: "₫",  factor: 1,   color: "orange", desc: "Phí claim location (VND)" },
+  deposit_rate:          { label: "Deposit Rate",            icon: "💰", unit: "%",   factor: 100, color: "amber",  desc: "% deposit rate" },
+  commission_rate:       { label: "Commission Rate",         icon: "📊", unit: "%",   factor: 100, color: "purple", desc: "% WanderViet take from Company" },
+  hold_duration_minutes: { label: "Hold Duration",           icon: "⏱️",  unit: "min", factor: 1,   color: "blue",   desc: "Time to hold booking slot" },
+  no_show_hours:         { label: "No-Show Hours",           icon: "🚫", unit: "hrs", factor: 1,   color: "red",    desc: "Hours before auto no_show" },
+  max_booking_per_day:   { label: "Max Bookings / Day",      icon: "📅", unit: "",    factor: 1,   color: "teal",   desc: "Maximum bookings per user per day" },
+  at_min_votes:          { label: "AT Min Votes",            icon: "✅", unit: "",    factor: 1,   color: "green",  desc: "Minimum AT votes required to approve" },
+  claim_fee:             { label: "Claim Fee",               icon: "🏷️",  unit: "₫",  factor: 1,   color: "orange", desc: "Claim location fee (VND)" },
 };
 
 const RANGES = {
@@ -117,7 +117,7 @@ function EditModal({ cfg, open, onClose, onSaved }) {
 
   const handleSave = async () => {
     const num = parseFloat(value);
-    if (isNaN(num)) { setError("Giá trị phải là số"); return; }
+    if (isNaN(num)) { setError("Value must be a number"); return; }
 
     // Convert back: % → 0-1
     const storedVal = m.unit === "%" ? num / 100 : num;
@@ -128,7 +128,7 @@ function EditModal({ cfg, open, onClose, onSaved }) {
       onSaved();
       onClose();
     } catch (e) {
-      setError(e.response?.data?.message || "Lỗi khi lưu");
+      setError(e.response?.data?.message || "Error saving config");
     } finally {
       setSaving(false);
     }
@@ -226,7 +226,7 @@ export default function SystemConfigPage() {
 
   const handleSaved = () => {
     fetchConfigs();
-    showToast("Đã cập nhật config ✓");
+    showToast("Updated config");
   };
 
   const handleSeed = async () => {
@@ -236,7 +236,7 @@ export default function SystemConfigPage() {
       fetchConfigs();
       showToast(data.message);
     } catch (e) {
-      showToast(e.response?.data?.message || "Lỗi seed");
+      showToast(e.response?.data?.message || "Error seeding defaults");
     } finally { setSeeding(false); }
   };
 
@@ -254,7 +254,7 @@ export default function SystemConfigPage() {
     <div>
       <PageHeader
         title="System Configuration"
-        subtitle="Quản lý các tham số vận hành của hệ thống"
+        subtitle="System settings management for WanderViet. These values affect platform-wide behavior and can be overridden by companies/locations."
         action={
           <button onClick={handleSeed} disabled={seeding}
             className="text-sm px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-700

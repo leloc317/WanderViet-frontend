@@ -480,19 +480,20 @@ export default function TourDetailPage() {
       {/* NAV */}
       <nav className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-5 py-3 flex items-center gap-4">
-          <Link to="/explore" className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-              </svg>
-            </div>
-            <span className="font-bold text-gray-900 dark:text-white text-sm">WanderViet</span>
-          </Link>
-
-          <div className="hidden md:flex items-center gap-5 text-sm ml-4">
-            <Link to="/explore" className="text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white">Explore</Link>
-            <span className="font-semibold text-blue-600 dark:text-blue-400">Itinerary</span>
-            <Link to="/profile" className="text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white">My Trips</Link>
+          <div className="hidden md:flex items-center gap-1.5 text-sm ml-4 text-gray-400 dark:text-slate-500">
+            <Link to="/explore"
+              className="hover:text-gray-700 dark:hover:text-slate-300 transition-colors">
+              Explore
+            </Link>
+            <span>›</span>
+            <Link to="/tours"
+              className="hover:text-gray-700 dark:hover:text-slate-300 transition-colors">
+              Tours
+            </Link>
+            <span>›</span>
+            <span className="text-gray-900 dark:text-white font-medium truncate max-w-[200px]">
+              {tour?.title || "Itinerary"}
+            </span>
           </div>
 
           <div className="ml-auto flex items-center gap-2">
@@ -526,7 +527,7 @@ export default function TourDetailPage() {
 
       <div className="max-w-7xl mx-auto px-5 py-5 flex gap-6">
         {/* ── LEFT SIDEBAR: Trip Setup ── */}
-        <aside className="w-56 shrink-0 hidden lg:block">
+        {/* <aside className="w-56 shrink-0 hidden lg:block">
           <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4 sticky top-20">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-blue-600 text-lg">⚙️</span>
@@ -575,7 +576,7 @@ export default function TourDetailPage() {
             </div>
 
             {/* Nav sections */}
-            <div className="mt-4 space-y-1 border-t border-gray-100 dark:border-slate-800 pt-4">
+            {/* <div className="mt-4 space-y-1 border-t border-gray-100 dark:border-slate-800 pt-4">
               {[
                 { icon:"📋", label:"Detailed Itinerary", active:true  },
                 { icon:"💰", label:"Expense Breakdown",  active:false },
@@ -591,7 +592,7 @@ export default function TourDetailPage() {
               ))}
             </div>
           </div>
-        </aside>
+        </aside> */}
 
         {/* ── CENTER: Itinerary ── */}
         <main className="flex-1 min-w-0">

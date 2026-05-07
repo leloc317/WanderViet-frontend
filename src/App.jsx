@@ -26,10 +26,10 @@ import LocationDetailPage     from "./pages/user/LocationDetailPage";
 import LocationFormPage        from "./pages/company/LocationFormPage";
 import TourSuggestionsPage    from "./pages/user/TourSuggestionsPage";
 import TourDetailPage         from "./pages/user/TourDetailPage";
-import TourProductListPage    from "./pages/user/TourProductListPage";   // MỚI
-import TourProductDetailPage  from "./pages/user/TourProductDetailPage";  // MỚI
-import MyTripsPage            from "./pages/user/MyTripsPage";            // MỚI
-import TripPlannerPage        from "./pages/user/TripPlannerPage";        // MỚI
+import TourProductListPage    from "./pages/user/TourProductListPage";
+import TourProductDetailPage  from "./pages/user/TourProductDetailPage";
+import MyTripsPage            from "./pages/user/MyTripsPage";
+import TripPlannerPage        from "./pages/user/TripPlannerPage";
 import SearchResultsPage      from "./pages/user/SearchResultsPage";
 import ProfilePage            from "./pages/user/ProfilePage";
 import UserBookingsPage       from "./pages/user/UserBookingsPage";
@@ -49,10 +49,10 @@ import TagsPage                from "./pages/admin/TagsPage";
 import AdminClaimsPage         from "./pages/admin/AdminClaimsPage";
 import AdminBookingsPage       from "./pages/admin/AdminBookingsPage";
 import AdminTourProductsPage   from "./pages/admin/AdminTourProductsPage";
-import SystemConfigPage        from "./pages/admin/SystemConfigPage";    // MỚI
-import AdminPaymentsPage       from "./pages/admin/AdminPaymentsPage";   // MỚI
-import AdminPayoutsPage        from "./pages/admin/AdminPayoutsPage";    // MỚI
-import AdminDiscountsPage    from "./pages/admin/AdminDiscountsPage";    // MỚI
+import SystemConfigPage        from "./pages/admin/SystemConfigPage";
+import AdminPaymentsPage       from "./pages/admin/AdminPaymentsPage";
+import AdminPayoutsPage        from "./pages/admin/AdminPayoutsPage";
+import AdminDiscountsPage      from "./pages/admin/AdminDiscountsPage";
 
 // ── Company ───────────────────────────────────────────────────────────────────
 import CompanyDashboardPage    from "./pages/company/CompanyDashboardPage";
@@ -68,9 +68,9 @@ import ServiceUnitPage         from "./pages/company/ServiceUnitPage";
 import AmenityTemplatePage     from "./pages/company/AmenityTemplatePage";
 import ChargeTemplatePage      from "./pages/company/ChargeTemplatePage";
 import CompanyStaffPage        from "./pages/company/CompanyStaffPage";
-import CompanyTourProductsPage      from "./pages/company/CompanyTourProductsPage";      // MỚI
-import CompanyTourBookingDetailPage from "./pages/company/CompanyTourBookingDetailPage"; // MỚI
-import CompanyDiscountsPage         from "./pages/company/CompanyDiscountsPage";          // MỚI
+import CompanyTourProductsPage      from "./pages/company/CompanyTourProductsPage";
+import CompanyTourBookingDetailPage from "./pages/company/CompanyTourBookingDetailPage";
+import CompanyDiscountsPage         from "./pages/company/CompanyDiscountsPage";
 
 // ── Staff Portal ──────────────────────────────────────────────────────────────
 import StaffBookingsPage    from "./pages/staff/StaffBookingsPage";
@@ -117,10 +117,10 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* ── Auth ─────────────────────────────────────────────────────────── */}
-        <Route path="/login"            element={<GuestRoute><LoginPage /></GuestRoute>} />
-        <Route path="/register"         element={<GuestRoute><RegisterPage /></GuestRoute>} />
-        <Route path="/forgot-password"  element={<ForgotPasswordPage />} />
-        <Route path="/reset-password"   element={<ResetPasswordPage />} />
+        <Route path="/login"           element={<GuestRoute><LoginPage /></GuestRoute>} />
+        <Route path="/register"        element={<GuestRoute><RegisterPage /></GuestRoute>} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password"  element={<ResetPasswordPage />} />
 
         {/* ── Admin ────────────────────────────────────────────────────────── */}
         <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminLayout /></ProtectedRoute>}>
@@ -138,29 +138,29 @@ export default function App() {
           <Route path="config"           element={<SystemConfigPage />} />
           <Route path="payments"         element={<AdminPaymentsPage />} />
           <Route path="payouts"          element={<AdminPayoutsPage />} />
-          <Route path="tour-products"         element={<AdminTourProductsPage />} />
-          <Route path="discounts"             element={<AdminDiscountsPage />} />
+          <Route path="tour-products"    element={<AdminTourProductsPage />} />
+          <Route path="discounts"        element={<AdminDiscountsPage />} />
         </Route>
 
         {/* ── Company ──────────────────────────────────────────────────────── */}
         <Route path="/company" element={<ProtectedRoute allowedRoles={["company"]}><CompanyLayout /></ProtectedRoute>}>
-          <Route index                           element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard"                element={<CompanyDashboardPage />} />
-          <Route path="profile"                  element={<CompanyProfilePage />} />
-          <Route path="locations"                element={<CompanyLocationsPage />} />
-          <Route path="locations/:id/units"      element={<ServiceUnitPage />} />
-          <Route path="locations/:id/amenities"  element={<AmenityTemplatePage />} />
-          <Route path="locations/:id/charges"    element={<ChargeTemplatePage />} />
-          <Route path="bookings"                 element={<CompanyBookingLocPage />} />
-          <Route path="bookings/:locationId"     element={<CompanyOrderListPage />} />
+          <Route index                                element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard"                     element={<CompanyDashboardPage />} />
+          <Route path="profile"                       element={<CompanyProfilePage />} />
+          <Route path="locations"                     element={<CompanyLocationsPage />} />
+          <Route path="locations/:id/units"           element={<ServiceUnitPage />} />
+          <Route path="locations/:id/amenities"       element={<AmenityTemplatePage />} />
+          <Route path="locations/:id/charges"         element={<ChargeTemplatePage />} />
+          <Route path="bookings"                      element={<CompanyBookingLocPage />} />
+          <Route path="bookings/:locationId"          element={<CompanyOrderListPage />} />
           <Route path="bookings/:locationId/:orderId" element={<CompanyOrderDetailPage />} />
-          <Route path="tour-products"            element={<CompanyTourProductsPage />} />
-          <Route path="tour-bookings/:orderId"   element={<CompanyTourBookingDetailPage />} />
-          <Route path="advertisements"           element={<CompanyAdsPage />} />
-          <Route path="claims"                   element={<CompanyClaimsPage />} />
-          <Route path="staff"                    element={<CompanyStaffPage />} />
-          <Route path="payouts"                  element={<CompanyPayoutsPage />} />
-          <Route path="discounts"               element={<CompanyDiscountsPage />} />
+          <Route path="tour-products"                 element={<CompanyTourProductsPage />} />
+          <Route path="tour-bookings/:orderId"        element={<CompanyTourBookingDetailPage />} />
+          <Route path="advertisements"                element={<CompanyAdsPage />} />
+          <Route path="claims"                        element={<CompanyClaimsPage />} />
+          <Route path="staff"                         element={<CompanyStaffPage />} />
+          <Route path="payouts"                       element={<CompanyPayoutsPage />} />
+          <Route path="discounts"                     element={<CompanyDiscountsPage />} />
         </Route>
 
         {/* ── Staff Portal ─────────────────────────────────────────────────── */}
@@ -198,12 +198,25 @@ export default function App() {
           <Route path="trips"                    element={<ProtectedRoute><MyTripsPage /></ProtectedRoute>} />
           <Route path="trips/:id"                element={<ProtectedRoute><TripPlannerPage /></ProtectedRoute>} />
           <Route path="search/:category"         element={<SearchResultsPage />} />
+
+          {/* Profile — all tabs share ProfilePage, URL determines active tab */}
           <Route path="profile"                  element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-          <Route path="favorites"                element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="profile/security"         element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="profile/for-you"          element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="profile/favorites"        element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="profile/vouchers"         element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="profile/trips"            element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="profile/at-apply"         element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+
+          {/* Bookings — dedicated pages */}
           <Route path="profile/bookings"         element={<ProtectedRoute><UserBookingsPage /></ProtectedRoute>} />
           <Route path="profile/bookings/:id"     element={<ProtectedRoute><UserBookingDetailPage /></ProtectedRoute>} />
+
+          {/* /favorites → redirect to canonical profile tab URL */}
+          <Route path="favorites"                element={<Navigate to="/profile/favorites" replace />} />
+
           <Route path="booking/payment/:orderId" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
-          <Route path="payment/result"            element={<PaymentResultPage />} />
+          <Route path="payment/result"           element={<PaymentResultPage />} />
         </Route>
 
         {/* ── 404 ──────────────────────────────────────────────────────────── */}

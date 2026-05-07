@@ -32,10 +32,8 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
         <div className="absolute bottom-10 left-10 text-white max-w-lg">
           <div className="flex items-center gap-2 mb-5">
-            <div className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-              </svg>
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+              <span className="text-white font-black text-xs">W</span>
             </div>
             <span className="font-semibold text-lg tracking-wide">WanderViet</span>
           </div>
@@ -52,12 +50,21 @@ export default function LoginPage() {
       {/* ── RIGHT: Form panel ── */}
       <div className="flex-1 flex items-center justify-center bg-gray-50 px-8 py-10 overflow-y-auto">
         <div className="w-full max-w-[340px]">
+
+          {/* Back to Explore */}
+          <Link to="/explore"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600
+                       transition-colors mb-6">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+            </svg>
+            Back to Explore
+          </Link>
+
           {/* Mobile logo */}
           <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-              </svg>
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+              <span className="text-white font-black text-xs">W</span>
             </div>
             <span className="font-bold text-gray-900 text-lg">WanderViet</span>
           </div>
@@ -153,25 +160,23 @@ export default function LoginPage() {
               className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800
                          text-white font-semibold rounded-full py-3.5 text-sm
                          transition-colors disabled:opacity-60 mt-1">
-              {loading ? "Đang đăng nhập..." : "Login"}
+              {loading ? "Signing in..." : "Login"}
             </button>
           </form>
 
           {/* Divider */}
           <div className="relative my-5">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200 dark:border-slate-700"/>
+              <div className="w-full border-t border-gray-200"/>
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-gray-50 dark:bg-slate-900 px-4 text-gray-400 text-sm">
-                Or continue with
-              </span>
+              <span className="bg-gray-50 px-4 text-gray-400 text-sm">Or continue with</span>
             </div>
           </div>
 
           <GoogleSignInButton />
 
-          <p className="text-center text-gray-500 dark:text-slate-400 text-sm mt-6">
+          <p className="text-center text-gray-500 text-sm mt-6">
             Don't have an account?{" "}
             <Link to="/register" className="text-blue-600 font-medium hover:underline">Sign up</Link>
           </p>

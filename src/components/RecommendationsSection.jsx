@@ -9,7 +9,7 @@ const CAT_LABEL = {
   service:"🔧 Service", other:"📦 Other",
 };
 const PRICE_LABEL = {
-  free:"🆓 Free", budget:"$ Budget", mid:"$$ Mid", high:"$$$ High", luxury:"$$$$ Luxury",
+  free:"🆓 Free", budget:"Low Budget", mid:"Mid", high:"High", luxury:"Luxury",
 };
 const fmtScore = (n) => (n ?? 0).toFixed(1);
 const fmtPrice = (loc) => {
@@ -19,9 +19,8 @@ const fmtPrice = (loc) => {
     const n = loc.priceRange.min;
     return n >= 1_000_000 ? `₫${(n/1_000_000).toFixed(1)}M` : `₫${Math.round(n/1000)}k`;
   }
-  return { budget:"$", mid:"$$", high:"$$$", luxury:"$$$$" }[loc.priceRange.label] || "";
+  return { budget:"Low Budget", mid:"Mid", high:"High", luxury:"Luxury" }[loc.priceRange.label] || "";
 };
-const PRICE_SHORT = { free:"Free", budget:"$", mid:"$$", high:"$$$", luxury:"$$$$" };
 
 function InterestBar({ label, score, maxScore, color }) {
   const pct = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
@@ -98,18 +97,24 @@ function TourCard({ tour }) {
   );
 }
 
+const INITIAL_LIMIT = 12;
+const LOAD_MORE_LIMIT = 8;
+
 export default function RecommendationsSection() {
   const navigate = useNavigate();
-  const [locations, setLocations] = useState([]);
-  const [tours,     setTours]     = useState([]);
-  const [profile,   setProfile]   = useState(null);
-  const [loading,   setLoading]   = useState(true);
-  const [tab,       setTab]       = useState("recs");
-  const [source,    setSource]    = useState("popular_fallback");
+  const [locations,    setLocations]    = useState([]);
+  const [tours,        setTours]        = useState([]);
+  const [profile,      setProfile]      = useState(null);
+  const [loading,      setLoading]      = useState(true);
+  const [loadingMore,  setLoadingMore]  = useState(false);
+  const [tab,          setTab]          = useState("recs");
+  const [source,       setSource]       = useState("popular_fallback");
+  const [hasMore,      setHasMore]      = useState(true);
+  const [page,         setPage]         = useState(1);
 
   useEffect(() => {
     Promise.all([
-      api.get("/recommendations?limit=12").then(r => r.data.data),
+      api.get(`/recommendations?limit=${INITIAL_LIMIT}`).then(r => r.data.data),
       api.get("/recommendations/profile").then(r => r.data.data),
       api.get("/tours?limit=8&isTemplate=true&sortBy=stats.used&sortOrder=desc").then(r => r.data.data),
     ])
@@ -118,10 +123,36 @@ export default function RecommendationsSection() {
         setSource(recData.source ?? "popular_fallback");
         setProfile(profileData);
         setTours(tourData.tours ?? []);
+        // If returned less than limit, no more to load
+        setHasMore((recData.locations ?? []).length >= INITIAL_LIMIT);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  const handleLoadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const { data } = await api.get(`/recommendations?limit=${LOAD_MORE_LIMIT}&page=${nextPage}`);
+      const newLocs = data.data.locations ?? [];
+      if (newLocs.length === 0) {
+        setHasMore(false);
+      } else {
+        // Filter out duplicates
+        const existingIds = new Set(locations.map(l => l._id));
+        const unique = newLocs.filter(l => !existingIds.has(l._id));
+        setLocations(prev => [...prev, ...unique]);
+        setPage(nextPage);
+        if (newLocs.length < LOAD_MORE_LIMIT) setHasMore(false);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const maxCatScore   = Math.max(...(profile?.topCategories?.map(c=>c.score) ?? [1]), 1);
   const maxPriceScore = Math.max(...(profile?.topPrices?.map(p=>p.score)     ?? [1]), 1);
@@ -148,9 +179,9 @@ export default function RecommendationsSection() {
       <div className="flex items-center justify-between">
         <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl">
           {[
-            { key:"recs",    label:"For You"    },
-            { key:"tours",   label:"Tours"       },
-            { key:"profile", label:"My Profile"  },
+            { key:"recs",    label:"For You"   },
+            { key:"tours",   label:"Tours"      },
+            { key:"profile", label:"My Profile" },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={`px-3 py-1.5 text-xs rounded-lg transition-colors font-medium
@@ -163,8 +194,8 @@ export default function RecommendationsSection() {
         </div>
         {tab === "recs" && (
           isPersonalized
-            ? <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded-full">✨ Cá nhân hoá</span>
-            : <span className="text-[10px] text-gray-400 dark:text-slate-500">Xem thêm để cá nhân hoá →</span>
+            ? <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded-full">✨ Personalized</span>
+            : <span className="text-[10px] text-gray-400 dark:text-slate-500">See more to personalize →</span>
         )}
       </div>
 
@@ -174,19 +205,48 @@ export default function RecommendationsSection() {
           {locations.length === 0 ? (
             <div className="text-center py-10 text-gray-400 dark:text-slate-500">
               <p className="text-3xl mb-2">🗺️</p>
-              <p className="text-sm">Chưa có gợi ý nào</p>
+              <p className="text-sm">No recommendations available</p>
             </div>
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
               {locations.map(loc => <LocCard key={loc._id} loc={loc}/>)}
+              {/* Load more skeleton cards while loading */}
+              {loadingMore && [1,2,3].map(i => (
+                <div key={`skel-${i}`} className="shrink-0 w-40 animate-pulse">
+                  <div className="h-28 bg-gray-200 dark:bg-slate-800 rounded-2xl mb-2"/>
+                  <div className="h-3 bg-gray-200 dark:bg-slate-800 rounded w-28 mb-1.5"/>
+                  <div className="h-3 bg-gray-100 dark:bg-slate-700 rounded w-20"/>
+                </div>
+              ))}
             </div>
           )}
-          <button onClick={() => navigate("/explore")}
-            className="w-full py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl
-                       text-xs font-semibold text-gray-600 dark:text-slate-300
-                       hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-            Khám phá thêm →
-          </button>
+
+          {/* Load more button — only show if more exists */}
+          {hasMore && locations.length > 0 && (
+            <button
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="w-full py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl
+                         text-xs font-semibold text-gray-600 dark:text-slate-300
+                         hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors
+                         disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 point er">
+              {loadingMore ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"/>
+                  Loading...
+                </>
+              ) : (
+                "Load more recommendations"
+              )}
+            </button>
+          )}
+
+          {/* No more message */}
+          {!hasMore && locations.length > INITIAL_LIMIT && (
+            <p className="text-center text-xs text-gray-400 dark:text-slate-500">
+              You've seen all recommendations ✓
+            </p>
+          )}
         </>
       )}
 
@@ -195,7 +255,8 @@ export default function RecommendationsSection() {
         <>
           {tours.length === 0 ? (
             <div className="text-center py-10 text-gray-400 dark:text-slate-500">
-              <p className="text-3xl mb-2">🗺️</p><p className="text-sm">Chưa có tour nào</p>
+              <p className="text-3xl mb-2">🗺️</p>
+              <p className="text-sm">No tour available</p>
             </div>
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
@@ -206,7 +267,7 @@ export default function RecommendationsSection() {
             className="w-full py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl
                        text-xs font-semibold text-gray-600 dark:text-slate-300
                        hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-            Xem tất cả tours →
+            Explore all tours
           </button>
         </>
       )}
@@ -217,24 +278,24 @@ export default function RecommendationsSection() {
           {!hasProfile ? (
             <div className="text-center py-10">
               <p className="text-3xl mb-3">📊</p>
-              <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Chưa có dữ liệu hành vi</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">No profile data available</p>
               <p className="text-xs text-gray-400 dark:text-slate-500">
-                Xem, lưu và đánh giá địa điểm để hệ thống học sở thích của bạn
+                Observation, save and review places to help the system learn your preferences.
               </p>
             </div>
           ) : (
             <>
               <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl px-4 py-3">
                 <p className="text-xs text-blue-700 dark:text-blue-400">
-                  Dựa trên <strong>{profile.totalActions}</strong> tương tác trong 30 ngày gần nhất.
-                  Điểm giảm dần theo thời gian — hành động gần đây có trọng số cao hơn.
+                  Base on <strong>{profile.totalActions}</strong> interactions in the last 30 days.
+                  Scores decrease over time — more recent actions have higher weights.
                 </p>
               </div>
 
               {(profile.topCategories?.length ?? 0) > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3">
-                    Loại địa điểm yêu thích
+                    Favorite destination types
                   </p>
                   <div className="space-y-2.5">
                     {profile.topCategories.slice(0,6).map(({category, score}) => (
@@ -248,7 +309,7 @@ export default function RecommendationsSection() {
               {(profile.topPrices?.length ?? 0) > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3">
-                    Phân khúc giá ưa thích
+                    Favorite price range
                   </p>
                   <div className="space-y-2.5">
                     {profile.topPrices.map(({label, score}) => (
@@ -261,7 +322,7 @@ export default function RecommendationsSection() {
 
               <div className="border-t border-gray-100 dark:border-slate-800 pt-3">
                 <p className="text-[10px] text-gray-400 dark:text-slate-500 text-center">
-                  Xem +1 · Lưu +3 · Đánh giá +5 · Lọc +2 · Fork tour +4
+                  Observation +1 · Save +3 · Review +5 · Filter +2 · Fork tour +4
                 </p>
               </div>
             </>

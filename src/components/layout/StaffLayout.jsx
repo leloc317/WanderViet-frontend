@@ -1,3 +1,4 @@
+import ErrorBoundary from "../ErrorBoundary";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -27,6 +28,7 @@ function MoonIcon() {
 export default function StaffLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [mobileOpen,  setMobileOpen]  = useState(false);
 
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem("theme");

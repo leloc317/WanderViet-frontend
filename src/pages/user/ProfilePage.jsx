@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import userAppService from "../../services/userApp.service";
 import RecommendationsSection from "../../components/RecommendationsSection";
@@ -8,7 +8,6 @@ import api from "../../lib/axios";
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString("vi-VN") : "—";
 const fmtVND  = (n) => n >= 1_000_000 ? `${(n/1_000_000).toFixed(1)}M₫` : `${Math.round(n/1000)}k₫`;
 
-// ─── Interests (match RegisterPage + exploreController catMap) ────────────────
 const INTERESTS = [
   { key:"culinary",    label:"Food & Dining",    icon:"🍜" },
   { key:"nature",      label:"Nature",            icon:"🌿" },
@@ -20,15 +19,16 @@ const INTERESTS = [
   { key:"photography", label:"Photography",       icon:"📸" },
 ];
 
+// Each tab maps to a URL path under /profile/*
 const NAV = [
-  { key:"profile",  icon:"👤", label:"Personal Profile" },
-  { key:"security", icon:"🔐", label:"Security"          },
-  { key:"for-you",  icon:"✨", label:"For You"           },
-  { key:"favorites",icon:"❤️", label:"Favorites"        },
-  { key:"bookings", icon:"📅", label:"My Bookings"      },
-  { key:"trips",    icon:"🗺️", label:"My Trips"         },
-  { key:"vouchers", icon:"🎫", label:"My Vouchers"      },
-  { key:"at-apply", icon:"✅", label:"Join Approved Team"},
+  { key:"",          path:"/profile",           icon:"👤", label:"Personal Profile" },
+  { key:"security",  path:"/profile/security",  icon:"🔐", label:"Security"          },
+  { key:"for-you",   path:"/profile/for-you",   icon:"✨", label:"For You"           },
+  { key:"favorites", path:"/profile/favorites", icon:"❤️", label:"Favorites"        },
+  { key:"bookings",  path:"/profile/bookings",  icon:"📅", label:"My Bookings"      },
+  { key:"trips",     path:"/profile/trips",     icon:"🗺️", label:"My Trips"         },
+  { key:"vouchers",  path:"/profile/vouchers",  icon:"🎫", label:"My Vouchers"      },
+  { key:"at-apply",  path:"/profile/at-apply",  icon:"✅", label:"Join Approved Team"},
 ];
 
 const inputCls = `w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700
@@ -37,7 +37,6 @@ const inputCls = `w-full bg-white dark:bg-slate-800 border border-gray-200 dark:
                   focus:outline-none focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500
                   transition-all`;
 
-// ─── Password strength ────────────────────────────────────────────────────────
 const getStrength = (pw) => {
   if (!pw) return 0;
   let s = 0;
@@ -69,7 +68,11 @@ function VouchersTab() {
     });
   };
 
-  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"/></div>;
+  if (loading) return (
+    <div className="flex justify-center py-20">
+      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"/>
+    </div>
+  );
 
   return (
     <div>
@@ -98,8 +101,9 @@ function VouchersTab() {
                     <code className="text-lg font-black text-gray-900 dark:text-white tracking-widest">{v.code}</code>
                     <button onClick={() => handleCopy(v.code)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all
-                        ${isCopied ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400"
-                                   : "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100"}`}>
+                        ${isCopied
+                          ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400"
+                          : "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100"}`}>
                       {isCopied ? "✓ Copied" : "📋 Copy"}
                     </button>
                   </div>
@@ -123,18 +127,25 @@ function VouchersTab() {
   );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const navigate          = useNavigate();
+  const location          = useLocation();
   const avatarInputRef    = useRef(null);
 
-  const [activeNav, setActiveNav] = useState("profile");
+  // Derive active tab from current URL path
+  const activeTab = (() => {
+    const path = location.pathname; // e.g. "/profile/favorites"
+    if (path === "/profile" || path === "/profile/") return "";
+    const seg = path.replace("/profile/", "");
+    return seg;
+  })();
 
   // Profile form
   const [form,      setForm]      = useState({ name:"", phone:"", dob:"", gender:"", address:"" });
   const [interests, setInterests] = useState([]);
-  const [avatar,    setAvatar]    = useState(null); // current avatar URL
+  const [avatar,    setAvatar]    = useState(null);
   const [saving,    setSaving]    = useState(false);
   const [saved,     setSaved]     = useState(false);
   const [formError, setFormError] = useState("");
@@ -147,8 +158,8 @@ export default function ProfilePage() {
   const [showPw,   setShowPw]   = useState(false);
 
   // Favorites
-  const [favorites,   setFavorites]   = useState([]);
-  const [favLoading,  setFavLoading]  = useState(false);
+  const [favorites,  setFavorites]  = useState([]);
+  const [favLoading, setFavLoading] = useState(false);
 
   // AT application
   const [atStatus,     setAtStatus]     = useState(null);
@@ -167,16 +178,18 @@ export default function ProfilePage() {
     }).catch(console.error);
   }, []);
 
+  // Load favorites when on that tab
   useEffect(() => {
-    if (activeNav !== "favorites") return;
+    if (activeTab !== "favorites") return;
     setFavLoading(true);
     userAppService.getFavorites().then(setFavorites).catch(console.error).finally(() => setFavLoading(false));
-  }, [activeNav]);
+  }, [activeTab]);
 
+  // Load AT status when on that tab
   useEffect(() => {
-    if (activeNav !== "at-apply") return;
+    if (activeTab !== "at-apply") return;
     userAppService.getATStatus().then(setAtStatus).catch(console.error);
-  }, [activeNav]);
+  }, [activeTab]);
 
   const f = (key) => ({
     value: form[key] ?? "",
@@ -195,7 +208,6 @@ export default function ProfilePage() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       const url = data.data?.url;
-      // Save avatar URL to profile
       await api.patch("/me/profile/avatar", { avatarUrl: url });
       setAvatar(url);
     } catch (e) {
@@ -203,7 +215,7 @@ export default function ProfilePage() {
     } finally { setUploadingAvatar(false); }
   };
 
-  // ── Save profile + interests ────────────────────────────────────────────────
+  // ── Save profile ────────────────────────────────────────────────────────────
   const handleSaveProfile = async () => {
     setSaving(true); setFormError("");
     try {
@@ -220,13 +232,9 @@ export default function ProfilePage() {
     if (!pwForm.next)    { setPwMsg({ type:"error", text:"New password is required" });     return; }
     if (pwForm.next.length < 6) { setPwMsg({ type:"error", text:"Password must be at least 6 characters" }); return; }
     if (pwForm.next !== pwForm.confirm) { setPwMsg({ type:"error", text:"Passwords do not match" }); return; }
-
     setPwSaving(true);
     try {
-      await api.post("/me/profile/password", {
-        currentPassword: pwForm.current,
-        newPassword:     pwForm.next,
-      });
+      await api.post("/me/profile/password", { currentPassword: pwForm.current, newPassword: pwForm.next });
       setPwMsg({ type:"success", text:"Password changed successfully!" });
       setPwForm({ current:"", next:"", confirm:"" });
     } catch(e) {
@@ -257,10 +265,22 @@ export default function ProfilePage() {
   const handleLogout = () => { logout(); navigate("/explore"); };
   const strength = getStrength(pwForm.next);
 
+  // ── Sidebar nav link helper ─────────────────────────────────────────────────
+  const sidebarLinkCls = (path) => {
+    const isActive = path === "/profile"
+      ? location.pathname === "/profile" || location.pathname === "/profile/"
+      : location.pathname.startsWith(path);
+    return `w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+            mb-0.5 transition-all text-left
+            ${isActive
+              ? "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400"
+              : "text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white"}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex">
 
-      {/* SIDEBAR */}
+      {/* ── SIDEBAR ── */}
       <aside className="w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800
                         flex flex-col shrink-0 sticky top-0 h-screen">
         <div className="px-5 py-5 border-b border-gray-100 dark:border-slate-800">
@@ -273,24 +293,22 @@ export default function ProfilePage() {
             <span className="font-bold text-gray-900 dark:text-white">WanderViet</span>
           </Link>
         </div>
-        <nav className="flex-1 py-3 px-3">
-          {NAV.map(({ key, icon, label }) => (
-            <button key={key} onClick={() => setActiveNav(key)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
-                          mb-0.5 transition-all
-                          ${activeNav === key
-                            ? "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400"
-                            : "text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white"}`}>
-              <span className="text-base w-5 text-center">{icon}</span>
+
+        <nav className="flex-1 py-3 px-3 overflow-y-auto">
+          {NAV.map(({ path, icon, label }) => (
+            // FIX: use NavLink → navigate to URL, URL changes, activeTab updates
+            <NavLink key={path} to={path} end={path === "/profile"}
+              className={sidebarLinkCls(path)}>
+              <span className="text-base w-5 text-center shrink-0">{icon}</span>
               {label}
-            </button>
+            </NavLink>
           ))}
         </nav>
+
         <div className="px-4 py-4 border-t border-gray-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5 mb-3">
             {avatar ? (
-              <img src={avatar} alt={form.name}
-                className="w-9 h-9 rounded-full object-cover shrink-0"/>
+              <img src={avatar} alt={form.name} className="w-9 h-9 rounded-full object-cover shrink-0"/>
             ) : (
               <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-600/20 flex items-center
                               justify-center text-blue-600 dark:text-blue-400 font-bold text-sm shrink-0">
@@ -303,49 +321,41 @@ export default function ProfilePage() {
             </div>
           </div>
           <button onClick={handleLogout}
-            className="w-full text-xs text-gray-400 dark:text-slate-500 hover:text-red-500
-                       text-left px-1 transition-colors">
+            className="w-full text-xs text-gray-400 dark:text-slate-500 hover:text-red-500 text-left px-1 transition-colors">
             Sign out →
           </button>
         </div>
       </aside>
 
-      {/* MAIN */}
+      {/* ── MAIN CONTENT ── */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-8 py-8">
 
           {/* ── PROFILE TAB ── */}
-          {activeNav === "profile" && (
+          {activeTab === "" && (
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Personal Profile</h1>
-              <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">
-                Manage your account and travel preferences
-              </p>
+              <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">Manage your account and travel preferences</p>
 
               {/* Avatar */}
               <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800
                               rounded-2xl p-5 flex items-center gap-4 mb-5">
                 <div className="relative shrink-0">
                   {avatar ? (
-                    <img src={avatar} alt={form.name}
-                      className="w-16 h-16 rounded-2xl object-cover"/>
+                    <img src={avatar} alt={form.name} className="w-16 h-16 rounded-2xl object-cover"/>
                   ) : (
                     <div className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-600/20 flex items-center
                                     justify-center text-blue-600 dark:text-blue-400 text-2xl font-black">
                       {form.name?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase()}
                     </div>
                   )}
-                  <button
-                    onClick={() => avatarInputRef.current?.click()}
-                    disabled={uploadingAvatar}
-                    title="Change photo"
+                  <button onClick={() => avatarInputRef.current?.click()} disabled={uploadingAvatar}
                     className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-blue-600 hover:bg-blue-700
                                text-white rounded-full flex items-center justify-center text-xs
                                transition-colors disabled:opacity-60 shadow">
                     {uploadingAvatar ? "…" : "✎"}
                   </button>
-                  <input ref={avatarInputRef} type="file" accept="image/*"
-                    className="hidden" onChange={handleAvatarUpload}/>
+                  <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload}/>
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900 dark:text-white">{form.name}</p>
@@ -394,11 +404,8 @@ export default function ProfilePage() {
               </div>
 
               {/* Travel interests */}
-              <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800
-                              rounded-2xl p-5 mb-5">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">Travel Interests</h3>
-                </div>
+              <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 mb-5">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Travel Interests</h3>
                 <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">
                   Used to personalise your recommendations in the "For You" tab
                 </p>
@@ -434,7 +441,9 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {formError && <p className="text-sm text-red-500 mb-4 bg-red-50 dark:bg-red-500/10 rounded-xl px-4 py-2.5">{formError}</p>}
+              {formError && (
+                <p className="text-sm text-red-500 mb-4 bg-red-50 dark:bg-red-500/10 rounded-xl px-4 py-2.5">{formError}</p>
+              )}
 
               <div className="flex justify-end gap-3">
                 <button onClick={() => navigate("/explore")}
@@ -453,43 +462,30 @@ export default function ProfilePage() {
           )}
 
           {/* ── SECURITY TAB ── */}
-          {activeNav === "security" && (
+          {activeTab === "security" && (
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Security</h1>
-              <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">
-                Manage your password and account security
-              </p>
+              <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">Manage your password and account security</p>
 
-              <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800
-                              rounded-2xl p-5 space-y-4">
+              <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
                 <h3 className="font-semibold text-gray-900 dark:text-white">Change Password</h3>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                    Current password
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Current password</label>
                   <div className="relative">
-                    <input type={showPw ? "text" : "password"}
-                      value={pwForm.current}
+                    <input type={showPw ? "text" : "password"} value={pwForm.current}
                       onChange={e => setPwForm(p=>({...p, current:e.target.value}))}
-                      placeholder="Enter current password"
-                      className={inputCls + " pr-10"}/>
+                      placeholder="Enter current password" className={inputCls + " pr-10"}/>
                     <button type="button" onClick={() => setShowPw(!showPw)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
                       {showPw ? "🙈" : "👁"}
                     </button>
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                    New password
-                  </label>
-                  <input type={showPw ? "text" : "password"}
-                    value={pwForm.next}
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">New password</label>
+                  <input type={showPw ? "text" : "password"} value={pwForm.next}
                     onChange={e => setPwForm(p=>({...p, next:e.target.value}))}
-                    placeholder="At least 6 characters"
-                    className={inputCls}/>
+                    placeholder="At least 6 characters" className={inputCls}/>
                   {pwForm.next && (
                     <div className="mt-2 space-y-1">
                       <div className="flex gap-1">
@@ -502,13 +498,9 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                    Confirm new password
-                  </label>
-                  <input type={showPw ? "text" : "password"}
-                    value={pwForm.confirm}
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Confirm new password</label>
+                  <input type={showPw ? "text" : "password"} value={pwForm.confirm}
                     onChange={e => setPwForm(p=>({...p, confirm:e.target.value}))}
                     placeholder="Repeat new password"
                     className={`${inputCls} ${pwForm.confirm && pwForm.confirm !== pwForm.next ? "border-red-400" : ""}`}/>
@@ -516,7 +508,6 @@ export default function ProfilePage() {
                     <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
                   )}
                 </div>
-
                 {pwMsg.text && (
                   <div className={`text-sm rounded-xl px-4 py-2.5
                     ${pwMsg.type === "success"
@@ -525,21 +516,16 @@ export default function ProfilePage() {
                     {pwMsg.text}
                   </div>
                 )}
-
                 <button onClick={handleChangePassword} disabled={pwSaving}
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white
-                             font-semibold text-sm rounded-xl transition-colors disabled:opacity-60">
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-colors disabled:opacity-60">
                   {pwSaving ? "Updating..." : "Update Password"}
                 </button>
               </div>
 
-              {/* Google login note */}
               {user?.googleId && (
-                <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200
-                                dark:border-amber-500/20 rounded-2xl">
+                <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl">
                   <p className="text-sm text-amber-700 dark:text-amber-400">
-                    🔑 Your account is linked with Google. If you've never set a password,
-                    use <strong>Forgot Password</strong> on the login page to create one.
+                    🔑 Your account is linked with Google. Use <strong>Forgot Password</strong> on the login page to create a password.
                   </p>
                 </div>
               )}
@@ -547,17 +533,19 @@ export default function ProfilePage() {
           )}
 
           {/* ── FOR YOU TAB ── */}
-          {activeNav === "for-you" && <RecommendationsSection />}
+          {activeTab === "for-you" && <RecommendationsSection />}
 
           {/* ── FAVORITES TAB ── */}
-          {activeNav === "favorites" && (
+          {activeTab === "favorites" && (
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Saved Places</h1>
               <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">
                 {favorites.length} location{favorites.length !== 1 ? "s" : ""} saved
               </p>
               {favLoading ? (
-                <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-20 bg-gray-200 dark:bg-slate-800 rounded-2xl animate-pulse"/>)}</div>
+                <div className="space-y-3">
+                  {[1,2,3].map(i => <div key={i} className="h-20 bg-gray-200 dark:bg-slate-800 rounded-2xl animate-pulse"/>)}
+                </div>
               ) : favorites.length === 0 ? (
                 <div className="text-center py-16">
                   <p className="text-4xl mb-3">❤️</p>
@@ -595,23 +583,21 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {activeNav === "bookings" && (
+          {/* ── MY BOOKINGS TAB ── */}
+          {activeTab === "bookings" && (
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Bookings</h1>
-              </div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">My Bookings</h1>
+              <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">View and manage all your booking orders</p>
+              {/* Bookings content rendered here — or redirect to dedicated page */}
               <div className="text-center py-10">
                 <p className="text-3xl mb-2">📅</p>
-                <p className="text-gray-500 dark:text-slate-400 text-sm mb-3">View and manage all your booking orders</p>
-                <button onClick={() => navigate("/profile/bookings")}
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">
-                  Open Bookings
-                </button>
+                <p className="text-gray-500 dark:text-slate-400 text-sm">Your bookings will appear here.</p>
               </div>
             </div>
           )}
 
-          {activeNav === "trips" && (
+          {/* ── MY TRIPS TAB ── */}
+          {activeTab === "trips" && (
             <div className="text-center py-20">
               <p className="text-5xl mb-3">🗺️</p>
               <p className="font-semibold text-gray-900 dark:text-white mb-1">My Trips</p>
@@ -622,9 +608,11 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {activeNav === "vouchers" && <VouchersTab />}
+          {/* ── VOUCHERS TAB ── */}
+          {activeTab === "vouchers" && <VouchersTab />}
 
-          {activeNav === "at-apply" && (
+          {/* ── AT APPLY TAB ── */}
+          {activeTab === "at-apply" && (
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Join Approved Team</h1>
               <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">Become a trusted travel expert and help verify locations</p>
@@ -648,7 +636,11 @@ export default function ProfilePage() {
               {user?.role !== "approved" && atStatus?.application?.status !== "pending" && !atSuccess && (
                 <div className="space-y-5">
                   <div className="grid grid-cols-3 gap-3">
-                    {[{icon:"⭐",title:"Trust Score",desc:"Build credibility"},{icon:"✍️",title:"Write Reviews",desc:"Expert insights"},{icon:"🗳️",title:"Vote on Tours",desc:"Shape content"}].map(({icon,title,desc}) => (
+                    {[
+                      {icon:"⭐",title:"Trust Score",desc:"Build credibility"},
+                      {icon:"✍️",title:"Write Reviews",desc:"Expert insights"},
+                      {icon:"🗳️",title:"Vote on Tours",desc:"Shape content"},
+                    ].map(({icon,title,desc}) => (
                       <div key={title} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-center">
                         <span className="text-2xl">{icon}</span>
                         <p className="font-semibold text-gray-900 dark:text-white text-xs mt-1">{title}</p>
@@ -659,11 +651,13 @@ export default function ProfilePage() {
                   <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Bio *</label>
-                      <textarea value={atForm.bio} onChange={e=>setAtForm({...atForm,bio:e.target.value})} rows={3} placeholder="Travel enthusiast with passion for food and culture..." className={`${inputCls} resize-none`}/>
+                      <textarea value={atForm.bio} onChange={e=>setAtForm({...atForm,bio:e.target.value})} rows={3}
+                        placeholder="Travel enthusiast with passion for food and culture..." className={`${inputCls} resize-none`}/>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Experience *</label>
-                      <textarea value={atForm.experience} onChange={e=>setAtForm({...atForm,experience:e.target.value})} rows={3} placeholder="5 years of travel blogging, visited 20+ countries..." className={`${inputCls} resize-none`}/>
+                      <textarea value={atForm.experience} onChange={e=>setAtForm({...atForm,experience:e.target.value})} rows={3}
+                        placeholder="5 years of travel blogging, visited 20+ countries..." className={`${inputCls} resize-none`}/>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Specialties</label>
@@ -671,7 +665,10 @@ export default function ProfilePage() {
                         {SPECIALTIES.map(s => (
                           <button key={s} type="button"
                             onClick={() => setAtForm(f => ({...f, specialties: f.specialties.includes(s) ? f.specialties.filter(x=>x!==s) : [...f.specialties,s]}))}
-                            className={`text-xs px-3 py-1.5 rounded-full border transition-all ${atForm.specialties.includes(s) ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 border-gray-200 dark:border-slate-700"}`}>
+                            className={`text-xs px-3 py-1.5 rounded-full border transition-all
+                              ${atForm.specialties.includes(s)
+                                ? "bg-blue-600 text-white border-blue-600"
+                                : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 border-gray-200 dark:border-slate-700"}`}>
                             {s}
                           </button>
                         ))}

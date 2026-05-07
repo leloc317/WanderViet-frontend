@@ -58,7 +58,7 @@ export default function UserLayout() {
             <span className={`font-bold text-sm ${d ? "text-white" : "text-gray-900"}`}>WanderViet</span>
           </NavLink>
 
-          {/* Nav links — desktop only */}
+          {/* Nav links */}
           <nav className="hidden md:flex items-center gap-5 ml-4">
             <NavLink to="/explore" className={linkCls}>Explore</NavLink>
             <NavLink to="/tours"   className={linkCls}>Tours</NavLink>
@@ -112,13 +112,12 @@ export default function UserLayout() {
                           {item.label}
                         </NavLink>
                       ))}
-                      {/* Portal links based on role */}
                       {user.role === "company" && (
                         <NavLink to="/company" onClick={() => setMenuOpen(false)}
                           className={`block px-4 py-2.5 text-sm transition-colors border-t mt-1
                                       ${d ? "border-slate-800 text-emerald-400 hover:bg-slate-800"
                                           : "border-gray-100 text-emerald-600 hover:bg-gray-50"}`}>
-                          🏢 Company Portal
+                          Company Portal
                         </NavLink>
                       )}
                       {user.role === "approved" && (
@@ -126,7 +125,7 @@ export default function UserLayout() {
                           className={`block px-4 py-2.5 text-sm transition-colors border-t mt-1
                                       ${d ? "border-slate-800 text-blue-400 hover:bg-slate-800"
                                           : "border-gray-100 text-blue-600 hover:bg-gray-50"}`}>
-                          ✅ AT Portal
+                          AT Portal
                         </NavLink>
                       )}
                       {user.role === "admin" && (
@@ -134,7 +133,7 @@ export default function UserLayout() {
                           className={`block px-4 py-2.5 text-sm transition-colors border-t mt-1
                                       ${d ? "border-slate-800 text-red-400 hover:bg-slate-800"
                                           : "border-gray-100 text-red-600 hover:bg-gray-50"}`}>
-                          ⚙️ Admin Portal
+                          Admin Portal
                         </NavLink>
                       )}
                       {user.role === "company_staff" && (
@@ -149,7 +148,7 @@ export default function UserLayout() {
                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-t mt-1
                                     ${d ? "border-slate-800 text-red-400 hover:bg-slate-800"
                                         : "border-gray-100 text-red-500 hover:bg-gray-50"}`}>
-                        ⇥ Sign out
+                        Sign out
                       </button>
                     </div>
                   </>
@@ -208,14 +207,14 @@ export default function UserLayout() {
         ))}
       </nav>
 
-      {/* ── Main content — padding bottom cho mobile nav ── */}
+      {/* ── Main content ── */}
       <main className="flex-1 pb-14 md:pb-0">
         <Outlet />
       </main>
 
-      {/* ── Footer minimal ── */}
+      {/* ── Footer ── */}
       <footer className={`border-t py-6 px-4 text-center text-xs ${d ? "border-slate-800 text-slate-600" : "border-gray-200 text-gray-400"}`}>
-        © {new Date().getFullYear()} WanderViet · Khám phá Việt Nam
+        © {new Date().getFullYear()} WanderViet · Discovery across Vietnam
       </footer>
     </div>
   );

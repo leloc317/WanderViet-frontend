@@ -3,14 +3,17 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../lib/axios";
 import AssignUnitsModal from "../../components/modals/AssignUnitsModal";
-import CheckInModal      from "../../components/modals/CheckInModal";
-import CheckOutModal     from "../../components/modals/CheckOutModal";
+import CheckInModal     from "../../components/modals/CheckInModal";
+import CheckOutModal    from "../../components/modals/CheckOutModal";
+
+const fmtVND = (n) => `₫${Number(n ?? 0).toLocaleString("vi-VN")}`;
 
 const STATUS_META = {
   holding:               { label:"Holding",          color:"text-yellow-600 dark:text-yellow-400",   bg:"bg-yellow-50 dark:bg-yellow-400/10" },
   confirmed:             { label:"Confirmed",         color:"text-blue-600 dark:text-blue-400",       bg:"bg-blue-50 dark:bg-blue-400/10" },
   checked_in:            { label:"Checked in",        color:"text-emerald-600 dark:text-emerald-400", bg:"bg-emerald-50 dark:bg-emerald-400/10" },
   partially_checked_out: { label:"Partial checkout",  color:"text-purple-600 dark:text-purple-400",   bg:"bg-purple-50 dark:bg-purple-400/10" },
+  checked_out:           { label:"Checked out",       color:"text-orange-600 dark:text-orange-400",   bg:"bg-orange-50 dark:bg-orange-400/10" },
   completed:             { label:"Completed",         color:"text-gray-600 dark:text-slate-300",      bg:"bg-gray-50 dark:bg-slate-800" },
   cancelled:             { label:"Cancelled",         color:"text-red-600 dark:text-red-400",         bg:"bg-red-50 dark:bg-red-400/10" },
 };
@@ -31,20 +34,232 @@ function InfoRow({ label, value }) {
   );
 }
 
+// ── Finalize Bill Modal ─────────────────────────────────────────────────────
+function FinalizeBillModal({ order, unitBookings, onClose, onSuccess }) {
+  const [loading,   setLoading]   = useState(false);
+  const [preview,   setPreview]   = useState(null);
+  const [fetching,  setFetching]  = useState(true);
+  const [error,     setError]     = useState("");
+
+  // Fetch preview from backend
+  useEffect(() => {
+    const fetchPreview = async () => {
+      try {
+        const { data } = await api.get(`/bookings/${order._id}/finalize-preview`);
+        setPreview(data.data);
+      } catch (e) {
+        // Fallback: calculate client-side
+        const h = order.hotelDetails;
+        const basePrice = h?.totalPrice
+          || (h?.pricePerUnit * (h?.nights ?? 1) * (h?.rooms ?? 1))
+          || 0;
+
+        const extrasByRoom = unitBookings.map(ub => ({
+          roomNumber: ub.unit?.unitNumber ?? "Room",
+          extras: ub.extraCharges ?? [],
+          subtotal: (ub.extraCharges ?? []).reduce((s, e) =>
+            s + (Number(e.totalPrice) || Number(e.amount) || 0), 0),
+        }));
+
+        const totalExtras = extrasByRoom.reduce((s, r) => s + r.subtotal, 0);
+        const deposit     = order.deposit?.amount || 0;
+        const remaining   = Math.max(0, basePrice + totalExtras - deposit);
+
+        setPreview({ basePrice, extrasByRoom, totalExtras, totalPaid: deposit, remaining, totalBill: basePrice + totalExtras });
+      } finally {
+        setFetching(false);
+      }
+    };
+    fetchPreview();
+  }, [order._id]);
+
+  const handleFinalize = async () => {
+    setLoading(true); setError("");
+    try {
+      const { data } = await api.post(`/bookings/${order._id}/finalize`);
+      onSuccess(data.data);
+    } catch (e) {
+      setError(e.response?.data?.message ?? "Finalize failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center
+                    p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl
+                      max-h-[90vh] flex flex-col border dark:border-slate-700 shadow-2xl">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b
+                        border-gray-200 dark:border-slate-800 shrink-0">
+          <div>
+            <h3 className="font-bold text-gray-900 dark:text-white">Finalize Bill</h3>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+              {order.contactName} · #{order._id.slice(-8).toUpperCase()}
+            </p>
+          </div>
+          <button onClick={onClose}
+            className="text-gray-400 hover:text-gray-700 dark:hover:text-white text-2xl">×</button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
+          {fetching ? (
+            <div className="space-y-3 animate-pulse">
+              {[1,2,3].map(i => <div key={i} className="h-12 bg-gray-200 dark:bg-slate-800 rounded-xl"/>)}
+            </div>
+          ) : preview ? (
+            <>
+              {/* Base price */}
+              <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Base amount</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {fmtVND(preview.basePrice)}
+                  </span>
+                </div>
+                {order.hotelDetails && (
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
+                    {order.hotelDetails.checkIn} → {order.hotelDetails.checkOut}
+                    · {order.hotelDetails.rooms ?? 1} room(s)
+                    · {order.hotelDetails.nights ?? 1} night(s)
+                  </p>
+                )}
+              </div>
+
+              {/* Extras per room */}
+              {preview.extrasByRoom?.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
+                    Extra Charges by Room
+                  </p>
+                  {preview.extrasByRoom.map((room, i) => (
+                    <div key={i} className="border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                      <div className="flex items-center justify-between px-3 py-2
+                                      bg-gray-50 dark:bg-slate-800">
+                        <span className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          🛏️ Room {room.roomNumber}
+                        </span>
+                        <span className={`text-xs font-bold ${room.subtotal > 0 ? "text-orange-600 dark:text-orange-400" : "text-gray-400"}`}>
+                          {room.subtotal > 0 ? `+${fmtVND(room.subtotal)}` : "No extras"}
+                        </span>
+                      </div>
+                      {room.extras?.length > 0 && (
+                        <div className="divide-y divide-gray-100 dark:divide-slate-800">
+                          {room.extras.map((e, j) => (
+                            <div key={j} className="flex justify-between items-center px-3 py-2">
+                              <span className="text-xs text-gray-600 dark:text-slate-400">
+                                {e.label || e.name || "Extra"}
+                                {e.quantity > 1 && ` ×${e.quantity}`}
+                              </span>
+                              <span className="text-xs font-medium text-gray-900 dark:text-white">
+                                {fmtVND(Number(e.totalPrice) || Number(e.amount) || 0)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Summary */}
+              <div className="border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                <div className="divide-y divide-gray-100 dark:divide-slate-800">
+                  <div className="flex justify-between px-4 py-2.5">
+                    <span className="text-sm text-gray-600 dark:text-slate-400">Base amount</span>
+                    <span className="text-sm text-gray-900 dark:text-white">{fmtVND(preview.basePrice)}</span>
+                  </div>
+                  {preview.totalExtras > 0 && (
+                    <div className="flex justify-between px-4 py-2.5">
+                      <span className="text-sm text-gray-600 dark:text-slate-400">Total extras</span>
+                      <span className="text-sm text-orange-600 dark:text-orange-400">+{fmtVND(preview.totalExtras)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between px-4 py-2.5">
+                    <span className="text-sm text-gray-600 dark:text-slate-400">Already paid (deposit)</span>
+                    <span className="text-sm text-emerald-600 dark:text-emerald-400">−{fmtVND(preview.totalPaid)}</span>
+                  </div>
+                  <div className="flex justify-between px-4 py-3 bg-gray-50 dark:bg-slate-800">
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">Remaining balance</span>
+                    <span className="text-base font-bold text-blue-600 dark:text-blue-400">
+                      {fmtVND(preview.remaining)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {preview.remaining === 0 && (
+                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200
+                                dark:border-emerald-500/30 rounded-xl px-4 py-3 text-center">
+                  <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                    ✅ Fully paid — will complete immediately
+                  </p>
+                </div>
+              )}
+
+              {preview.remaining > 0 && (
+                <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200
+                                dark:border-blue-500/30 rounded-xl px-4 py-3">
+                  <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-1">
+                    💳 Payment link will be sent to guest
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                    Guest will receive a VNPay payment link for {fmtVND(preview.remaining)}.
+                    Order completes once payment is confirmed.
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-center text-gray-400 text-sm py-8">Could not load bill preview</p>
+          )}
+
+          {error && (
+            <div className="bg-red-50 dark:bg-red-500/10 border border-red-200
+                            dark:border-red-500/30 rounded-xl px-4 py-3">
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-gray-200 dark:border-slate-800 flex gap-3 shrink-0">
+          <button onClick={onClose}
+            className="flex-1 py-3 border border-gray-200 dark:border-slate-700 rounded-xl
+                       text-sm font-medium text-gray-600 dark:text-slate-400
+                       hover:bg-gray-50 dark:hover:bg-slate-800">
+            Cancel
+          </button>
+          <button onClick={handleFinalize} disabled={loading || fetching}
+            className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl
+                       text-sm font-semibold transition-colors disabled:opacity-50">
+            {loading ? "Processing..." : "Confirm & Finalize"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Page ───────────────────────────────────────────────────────────────
 export default function StaffOrderDetailPage() {
   const { id: orderId } = useParams();
-  const { user }        = useNavigate ? useAuth() : { user: null };
   const navigate        = useNavigate();
   const { user: authUser } = useAuth();
 
   const locationId = authUser?.staffInfo?.location?._id ?? authUser?.staffInfo?.location;
 
-  const [order,        setOrder]        = useState(null);
-  const [unitBookings, setUnitBookings] = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [showAssign,   setShowAssign]   = useState(false);
-  const [showCheckIn,  setShowCheckIn]  = useState(null);
-  const [showCheckOut, setShowCheckOut] = useState(null);
+  const [order,          setOrder]          = useState(null);
+  const [unitBookings,   setUnitBookings]   = useState([]);
+  const [loading,        setLoading]        = useState(true);
+  const [showAssign,     setShowAssign]     = useState(false);
+  const [showCheckIn,    setShowCheckIn]    = useState(null);
+  const [showCheckOut,   setShowCheckOut]   = useState(null);
+  const [showFinalize,   setShowFinalize]   = useState(false);
+  const [finalizeResult, setFinalizeResult] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -78,6 +293,19 @@ export default function StaffOrderDetailPage() {
   const isHotel = order.bookingType === "hotel";
   const d       = order[`${order.bookingType}Details`] ?? {};
 
+  // Check if all rooms are checked out → show Finalize button
+  // Show Finalize when ALL rooms are checked_out regardless of order status
+  // (backend sets order to partially_checked_out or checked_in during the process)
+  const allRoomsCheckedOut = isHotel
+    && unitBookings.length > 0
+    && unitBookings.every(ub => ub.status === "checked_out")
+    && order.status !== "cancelled";
+
+  // Debug: log current state
+  console.log("[StaffOrder] status:", order.status,
+    "| units:", unitBookings.map(u => u.status),
+    "| allOut:", allRoomsCheckedOut);
+
   return (
     <div className="max-w-lg mx-auto">
       {/* Header */}
@@ -96,6 +324,45 @@ export default function StaffOrderDetailPage() {
           </p>
         </div>
       </div>
+
+      {/* Finalize Bill Banner — shows when all rooms checked out */}
+      {allRoomsCheckedOut && !finalizeResult && (
+        <div className="bg-blue-600 rounded-2xl p-4 mb-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="font-semibold text-white text-sm">All rooms checked out ✓</p>
+            <p className="text-blue-200 text-xs mt-0.5">Ready to finalize bill and complete order</p>
+          </div>
+          <button onClick={() => setShowFinalize(true)}
+            className="shrink-0 bg-white text-blue-600 text-sm font-semibold
+                       px-4 py-2 rounded-xl hover:bg-blue-50 transition-colors">
+            Finalize Bill
+          </button>
+        </div>
+      )}
+
+      {/* Finalize result — show after success */}
+      {finalizeResult && (
+        <div className={`rounded-2xl p-4 mb-4 ${
+          finalizeResult.paymentRequired
+            ? "bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30"
+            : "bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30"
+        }`}>
+          {finalizeResult.paymentRequired ? (
+            <>
+              <p className="font-semibold text-amber-800 dark:text-amber-400 text-sm mb-1">
+                💳 Payment link sent to guest
+              </p>
+              <p className="text-amber-700 dark:text-amber-400 text-xs">
+                Remaining: <strong>{fmtVND(finalizeResult.remaining)}</strong> · Guest will pay via VNPay
+              </p>
+            </>
+          ) : (
+            <p className="font-semibold text-emerald-800 dark:text-emerald-400 text-sm">
+              ✅ Order completed — fully paid
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Guest info */}
       <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4 mb-4">
@@ -160,12 +427,6 @@ export default function StaffOrderDetailPage() {
                   {unitBookings.filter(u => u.status === "checked_out").length}/{unitBookings.length} checked out
                 </span>
               )}
-              {order.status === "confirmed" && unitBookings.every(u => u.status === "pending") && (
-                <button onClick={() => setShowAssign(true)}
-                  className="text-xs px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">
-                  {unitBookings.length > 0 ? "Re-assign" : "Assign"}
-                </button>
-              )}
             </div>
           </div>
 
@@ -182,6 +443,8 @@ export default function StaffOrderDetailPage() {
             <div className="space-y-2">
               {unitBookings.map(ub => {
                 const um = UNIT_META[ub.status] ?? UNIT_META.pending;
+                const ubExtras = (ub.extraCharges ?? []).reduce((s, e) =>
+                  s + (Number(e.totalPrice) || Number(e.amount) || 0), 0);
                 return (
                   <div key={ub._id}
                     className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-800">
@@ -196,15 +459,22 @@ export default function StaffOrderDetailPage() {
                           <span className="ml-1 text-xs text-gray-400 dark:text-slate-500">· Floor {ub.unit.floor}</span>
                         )}
                       </p>
-                      <span className={`text-xs ${um.color}`}>{um.label}</span>
-                      {ub.checkInAt && (
-                        <span className="text-xs text-gray-400 dark:text-slate-500 ml-2">
-                          · In: {new Date(ub.checkInAt).toLocaleTimeString("vi-VN", { hour:"2-digit", minute:"2-digit" })}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className={`text-xs ${um.color}`}>{um.label}</span>
+                        {ub.checkInAt && (
+                          <span className="text-xs text-gray-400 dark:text-slate-500">
+                            · In: {new Date(ub.checkInAt).toLocaleTimeString("vi-VN", { hour:"2-digit", minute:"2-digit" })}
+                          </span>
+                        )}
+                        {ubExtras > 0 && ub.status === "checked_out" && (
+                          <span className="text-xs text-orange-500 dark:text-orange-400 font-medium">
+                            · Extra: +{fmtVND(ubExtras)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="shrink-0">
-                      {ub.status === "pending" && (
+                      {ub.status === "pending" && ["confirmed","checked_in","partially_checked_out"].includes(order.status) && (
                         <button onClick={() => setShowCheckIn(ub)}
                           className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white
                                      rounded-lg text-xs font-medium transition-colors">
@@ -218,10 +488,8 @@ export default function StaffOrderDetailPage() {
                           Check-out
                         </button>
                       )}
-                      {ub.status === "checked_out" && ub.totalExtra > 0 && (
-                        <span className="text-xs text-red-500 font-medium">
-                          +{ub.totalExtra.toLocaleString("vi-VN")}đ
-                        </span>
+                      {ub.status === "checked_out" && (
+                        <span className="text-xs text-emerald-600 dark:text-emerald-400">✓ Done</span>
                       )}
                     </div>
                   </div>
@@ -253,27 +521,34 @@ export default function StaffOrderDetailPage() {
       {/* Modals */}
       {showAssign && (
         <AssignUnitsModal
-          order={order}
-          locationId={locationId}
+          order={order} locationId={locationId}
           onClose={() => setShowAssign(false)}
           onSuccess={() => { setShowAssign(false); fetchData(); }}
         />
       )}
       {showCheckIn && (
         <CheckInModal
-          unitBooking={showCheckIn}
-          order={order}
+          unitBooking={showCheckIn} order={order}
           onClose={() => setShowCheckIn(null)}
           onSuccess={() => { setShowCheckIn(null); fetchData(); }}
         />
       )}
       {showCheckOut && (
         <CheckOutModal
-          unitBooking={showCheckOut}
-          order={order}
-          locationId={locationId}
+          unitBooking={showCheckOut} order={order} locationId={locationId}
           onClose={() => setShowCheckOut(null)}
           onSuccess={() => { setShowCheckOut(null); fetchData(); }}
+        />
+      )}
+      {showFinalize && (
+        <FinalizeBillModal
+          order={order} unitBookings={unitBookings}
+          onClose={() => setShowFinalize(false)}
+          onSuccess={(result) => {
+            setShowFinalize(false);
+            setFinalizeResult(result);
+            fetchData();
+          }}
         />
       )}
     </div>

@@ -1,10 +1,10 @@
 const VARIANT_MAP = {
-  primary:   "bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold shadow-sm",
+  primary:   "bg-[#C84B31] hover:bg-[#A83D28] active:bg-[#8B3320] text-white font-semibold shadow-sm",
   secondary: "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white dark:border-slate-600",
   danger:    "bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 dark:bg-red-500/15 dark:hover:bg-red-500/25 dark:text-red-400 dark:border-red-500/30",
   ghost:     "bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300",
   success:   "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/15 dark:hover:bg-emerald-500/25 dark:text-emerald-400 dark:border-emerald-500/30",
-  link:      "text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline-offset-4 hover:underline p-0",
+  link:      "text-[#C84B31] hover:text-[#A83D28] dark:text-[#E8734A] dark:hover:text-[#C84B31] underline-offset-4 hover:underline p-0",
 };
 
 const SIZE_MAP = {
@@ -34,7 +34,7 @@ export function Button({
       className={`inline-flex items-center justify-center gap-2 font-medium
                   transition-all duration-150 select-none
                   disabled:opacity-50 disabled:cursor-not-allowed
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C84B31]/40
                   ${VARIANT_MAP[variant] ?? VARIANT_MAP.primary}
                   ${SIZE_MAP[size] ?? SIZE_MAP.md}
                   ${fullWidth ? "w-full" : ""}

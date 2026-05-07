@@ -5,15 +5,26 @@ import BundleBookingFlow from "../../components/BundleBookingFlow";
 import BookingModal from "../../components/modals/BookingModal";
 import api from "../../lib/axios";
 import MapView from "../../components/ui/MapView";
+import LocationSearchModal from "../../components/modals/LocationSearchModal";
+
+import {
+  Globe, UtensilsCrossed, Hotel, Landmark,
+  Coffee, Sparkles, ShoppingBag
+} from "lucide-react";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const CAT_ICON = {
-  restaurant:"🍽️", hotel:"🏨", cafe:"☕",
-  tourist_spot:"🏛️", entertainment:"🎡", shopping:"🛍️", other:"📍",
-};
+const CAT_ICON = [
+  { key: "all",           label: "All",          icon: <Globe size={15} strokeWidth={1.5}/> },
+  { key: "restaurant",    label: "Restaurants",  icon: <UtensilsCrossed size={15} strokeWidth={1.5}/> },
+  { key: "hotel",         label: "Hotels",       icon: <Hotel size={15} strokeWidth={1.5}/> },
+  { key: "tourist_spot",  label: "Sights",       icon: <Landmark size={15} strokeWidth={1.5}/> },
+  { key: "cafe",          label: "Cafes",        icon: <Coffee size={15} strokeWidth={1.5}/> },
+  { key: "entertainment", label: "Entertainment",icon: <Sparkles size={15} strokeWidth={1.5}/> },
+  { key: "shopping",      label: "Shopping",     icon: <ShoppingBag size={15} strokeWidth={1.5}/> },
+];
 const TRANSPORT_LABEL = {
-  walk:"🚶 Đi bộ", motorbike:"🏍️ Xe máy", car:"🚗 Ô tô",
-  taxi:"🚕 Taxi", bus:"🚌 Xe buýt", other:"🚌",
+  walk:"🚶 Walk", motorbike:"🏍️ Motorbike", car:"🚗 Car",
+  taxi:"🚕 Taxi", bus:"🚌 Bus", other:"🚌 Other",
 };
 const fmtBudget = (n) => {
   if (!n || n === 0) return "Free";
@@ -21,87 +32,6 @@ const fmtBudget = (n) => {
   return `${Math.round(n/1000)}k₫`;
 };
 const TRANSPORT_TIME = { walk: 15, motorbike: 10, car: 10, taxi: 10, bus: 20, other: 15 };
-
-// ── LocationSearchModal ───────────────────────────────────────────────────────
-function LocationSearchModal({ day, onAdd, onClose }) {
-  const [q, setQ]             = useState("");
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const timer = useRef(null);
-
-  useEffect(() => {
-    if (!q.trim()) { setResults([]); return; }
-    clearTimeout(timer.current);
-    timer.current = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const { data } = await api.get("/search/locations", { params: { q, limit: 10 } });
-        setResults(data.data?.locations ?? []);
-      } catch { setResults([]); }
-      finally { setLoading(false); }
-    }, 350);
-    return () => clearTimeout(timer.current);
-  }, [q]);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl
-                      max-h-[85vh] flex flex-col border dark:border-slate-700 shadow-2xl">
-        <div className="flex items-center gap-3 px-5 pt-5 pb-3 shrink-0">
-          <div className="flex-1 flex items-center gap-2 bg-gray-100 dark:bg-slate-800 rounded-xl px-3 py-2.5">
-            <span className="text-gray-400 text-sm">🔍</span>
-            <input
-              autoFocus value={q} onChange={e => setQ(e.target.value)}
-              placeholder="Tìm nhà hàng, khách sạn, điểm vui chơi..."
-              className="flex-1 bg-transparent text-sm text-gray-900 dark:text-white
-                         placeholder:text-gray-400 dark:placeholder:text-slate-500 outline-none"
-            />
-            {loading && <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"/>}
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 dark:hover:text-white text-xl">×</button>
-        </div>
-        <p className="px-5 pb-2 text-xs text-gray-400 dark:text-slate-500 shrink-0">Thêm vào Ngày {day}</p>
-
-        <div className="flex-1 overflow-y-auto px-5 pb-5 space-y-2">
-          {!q.trim() && (
-            <div className="text-center py-10 text-gray-400 dark:text-slate-500">
-              <p className="text-2xl mb-2">🔍</p>
-              <p className="text-sm">Nhập tên địa điểm để tìm kiếm</p>
-            </div>
-          )}
-          {q.trim() && !loading && results.length === 0 && (
-            <div className="text-center py-10 text-gray-400 dark:text-slate-500">
-              <p className="text-sm">Không tìm thấy địa điểm nào</p>
-            </div>
-          )}
-          {results.map(loc => {
-            const img = loc.images?.find(i => i.isPrimary)?.url ?? loc.images?.[0]?.url;
-            return (
-              <button key={loc._id} type="button" onClick={() => onAdd(loc)}
-                className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200
-                           dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500/50
-                           hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all text-left group"
-              >
-                <div className="w-11 h-11 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 shrink-0">
-                  {img ? <img src={img} alt="" className="w-full h-full object-cover"/>
-                       : <div className="w-full h-full flex items-center justify-center text-lg">{CAT_ICON[loc.category] ?? "📍"}</div>}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{loc.name}</p>
-                  <p className="text-xs text-gray-400 dark:text-slate-500 truncate">
-                    {CAT_ICON[loc.category]} {loc.address?.city || ""}
-                    {loc.booking?.isBookable && <span className="ml-1 text-blue-500 font-medium">· Có thể đặt</span>}
-                  </p>
-                </div>
-                <span className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity text-sm">+</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── StopCard (image 3 style) ──────────────────────────────────────────────────
 function StopCard({ stop, isLast, onDelete, onBook, onMoveUp, onMoveDown, index }) {
@@ -131,7 +61,7 @@ function StopCard({ stop, isLast, onDelete, onBook, onMoveUp, onMoveDown, index 
               {img
                 ? <img src={img} alt="" className="w-full h-full object-cover"/>
                 : <div className="w-full h-full flex items-center justify-center text-2xl opacity-60">
-                    {CAT_ICON[loc?.category] ?? "📍"}
+                    {CAT_ICON.find(c => c.key === loc?.category)?.icon || "📍"}
                   </div>
               }
             </div>
@@ -203,7 +133,7 @@ function StopCard({ stop, isLast, onDelete, onBook, onMoveUp, onMoveDown, index 
                 {loc?.booking?.isBookable && (
                   <span className="text-[10px] bg-emerald-100 dark:bg-emerald-500/20
                                    text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded-full font-medium">
-                    Đặt được
+                    Bookable
                   </span>
                 )}
               </div>
@@ -216,7 +146,7 @@ function StopCard({ stop, isLast, onDelete, onBook, onMoveUp, onMoveDown, index 
                 className="self-center flex-shrink-0 text-xs bg-blue-600 hover:bg-blue-700
                            text-white px-3 py-1.5 rounded-lg font-semibold transition-colors"
               >
-                Đặt
+                Book
               </button>
             )}
           </div>
@@ -228,7 +158,7 @@ function StopCard({ stop, isLast, onDelete, onBook, onMoveUp, onMoveDown, index 
             <span className="text-[11px] text-gray-400 dark:text-slate-500 bg-gray-50 dark:bg-slate-800
                              border border-dashed border-gray-200 dark:border-slate-700
                              rounded-full px-2.5 py-0.5">
-              {TRANSPORT_LABEL[stop.transportTo] ?? "🚌"} · ~{TRANSPORT_TIME[stop.transportTo] ?? 15} mins
+              {TRANSPORT_LABEL.find(t => t.key === stop.transportTo)?.label || "🚌"} · ~{TRANSPORT_TIME[stop.transportTo] ?? 15} mins
             </span>
           </div>
         )}

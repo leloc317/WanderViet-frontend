@@ -20,11 +20,23 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950 px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 px-4">
       <div className="w-full max-w-sm">
 
+        {/* Back to Login */}
+        <div className="mb-4">
+          <Link to="/login"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600
+                       dark:text-slate-500 dark:hover:text-slate-300 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+            </svg>
+            Back to Login
+          </Link>
+        </div>
+
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
+        <div className="flex items-center justify-center gap-2 mb-6">
           <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
             <span className="text-white font-black text-sm">W</span>
           </div>
@@ -34,7 +46,6 @@ export default function ForgotPasswordPage() {
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200
                         dark:border-slate-800 p-8 shadow-sm">
           {sent ? (
-            /* Success state */
             <div className="text-center">
               <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-500/20 rounded-full
                               flex items-center justify-center mx-auto mb-4 text-2xl">
@@ -54,7 +65,6 @@ export default function ForgotPasswordPage() {
               </Link>
             </div>
           ) : (
-            /* Form state */
             <>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
                 Forgot password?
@@ -79,8 +89,7 @@ export default function ForgotPasswordPage() {
                 </div>
 
                 {error && (
-                  <p className="text-sm text-red-500 bg-red-50 dark:bg-red-500/10
-                                rounded-xl px-4 py-2.5">
+                  <p className="text-sm text-red-500 bg-red-50 dark:bg-red-500/10 rounded-xl px-4 py-2.5">
                     {error}
                   </p>
                 )}

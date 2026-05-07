@@ -14,7 +14,7 @@ const CATEGORIES = [
   { key:"other",         label:"Other",          icon:"📍" },
 ];
 
-const STEPS = ["Thông tin cơ bản", "Chi tiết", "Chính sách", "Ảnh", "Xem lại"];
+const STEPS = ["Information", "Detail", "Policies", "Images", "Review"];
 
 const inputCls = `w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700
                   rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white
@@ -42,36 +42,36 @@ function HotelDetails({ data, onChange }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Giờ nhận phòng">
+        <Field label="Check-in Time">
           <input type="time" value={data.checkInTime || "14:00"}
             onChange={e => set("checkInTime", e.target.value)} className={inputCls}/>
         </Field>
-        <Field label="Giờ trả phòng">
+        <Field label="Check-out Time">
           <input type="time" value={data.checkOutTime || "12:00"}
             onChange={e => set("checkOutTime", e.target.value)} className={inputCls}/>
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Hạng sao">
+        <Field label="Star Rating">
           <select value={data.starRating || ""} onChange={e => set("starRating", Number(e.target.value) || null)} className={selectCls}>
             <option value="">No rating</option>
             {[1,2,3,4,5].map(s => <option key={s} value={s}>{s} ⭐</option>)}
           </select>
         </Field>
-        <Field label="Tổng số phòng">
+        <Field label="Total Rooms">
           <input type="number" min={1} value={data.totalRooms || ""}
             onChange={e => set("totalRooms", Number(e.target.value) || null)}
             placeholder="e.g. 50" className={inputCls}/>
         </Field>
       </div>
-      <Field label="Điểm nổi bật">
+      <Field label="Highlights">
         <p className="text-xs text-gray-400 dark:text-slate-500 mb-2">Press Enter to add, max 5</p>
         <TagInput
           tags={data.highlights || []}
           onChange={tags => set("highlights", tags)}
           max={5} placeholder="e.g. Infinity pool"/>
       </Field>
-      <Field label="Tiện nghi khách sạn">
+      <Field label="Hotel Amenities">
         <AmenityInput
           amenities={data.amenities || []}
           onChange={ams => set("amenities", ams)}/>
@@ -84,14 +84,14 @@ function RestaurantDetails({ data, onChange }) {
   const set = (k, v) => onChange({ ...data, [k]: v });
   return (
     <div className="space-y-4">
-      <Field label="Loại ẩm thực">
+      <Field label="Cuisine Type">
         <TagInput
           tags={data.cuisineType || []}
           onChange={tags => set("cuisineType", tags)}
           placeholder="e.g. Vietnamese, Seafood"/>
       </Field>
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Quy định trang phục">
+        <Field label="Dress Code">
           <select value={data.dressCode || "none"} onChange={e => set("dressCode", e.target.value)} className={selectCls}>
             <option value="none">No dress code</option>
             <option value="casual">Casual</option>
@@ -99,7 +99,7 @@ function RestaurantDetails({ data, onChange }) {
             <option value="formal">Formal</option>
           </select>
         </Field>
-        <Field label="Thời gian dùng bữa (phút)">
+        <Field label="Average Meal Duration (minutes)">
           <input type="number" min={15} value={data.avgMealDuration || ""}
             onChange={e => set("avgMealDuration", Number(e.target.value) || null)}
             placeholder="e.g. 90" className={inputCls}/>
@@ -127,7 +127,7 @@ function CafeDetails({ data, onChange }) {
   const set = (k, v) => onChange({ ...data, [k]: v });
   return (
     <div className="space-y-4">
-      <Field label="Mức độ ồn ào">
+      <Field label="Noise Level">
         <select value={data.noiseLevel || "moderate"} onChange={e => set("noiseLevel", e.target.value)} className={selectCls}>
           <option value="quiet">Quiet</option>
           <option value="moderate">Moderate</option>
@@ -157,17 +157,17 @@ function TouristSpotDetails({ data, onChange }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Thời gian tham quan (phút)">
+        <Field label="Recommended Visit Duration (minutes)">
           <input type="number" min={15} value={data.recommendedDuration || ""}
             onChange={e => set("recommendedDuration", Number(e.target.value) || null)}
             placeholder="e.g. 120" className={inputCls}/>
         </Field>
-        <Field label="Giá vé (VND, 0 = miễn phí)">
+        <Field label="Entry Fee (VND, 0 = Free)">
           <input type="number" min={0} value={data.entryFee || 0}
             onChange={e => set("entryFee", Number(e.target.value))} className={inputCls}/>
         </Field>
       </div>
-      <Field label="Thời điểm lý tưởng">
+      <Field label="Best Time to Visit">
         <input value={data.bestTimeToVisit || ""}
           onChange={e => set("bestTimeToVisit", e.target.value)}
           placeholder="e.g. Early morning, avoid noon" className={inputCls}/>
@@ -194,20 +194,20 @@ function EntertainmentDetails({ data, onChange }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Độ tuổi tối thiểu">
+        <Field label="Minimum Age">
           <input type="number" min={0} value={data.minAge || 0}
             onChange={e => set("minAge", Number(e.target.value))} className={inputCls}/>
         </Field>
-        <Field label="Thời lượng (phút)">
+        <Field label="Duration (minutes)">
           <input type="number" min={5} value={data.durationMinutes || ""}
             onChange={e => set("durationMinutes", Number(e.target.value) || null)}
             placeholder="e.g. 60" className={inputCls}/>
         </Field>
-        <Field label="Nhóm tối thiểu">
+        <Field label="Minimum Group Size">
           <input type="number" min={1} value={data.groupSizeMin || 1}
             onChange={e => set("groupSizeMin", Number(e.target.value))} className={inputCls}/>
         </Field>
-        <Field label="Nhóm tối đa">
+        <Field label="Maximum Group Size">
           <input type="number" min={1} value={data.groupSizeMax || ""}
             onChange={e => set("groupSizeMax", Number(e.target.value) || null)}
             placeholder="No limit" className={inputCls}/>

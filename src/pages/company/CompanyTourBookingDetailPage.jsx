@@ -8,19 +8,19 @@ const fmtShort    = (d) => d ? new Date(d).toLocaleDateString("vi-VN", { day:"2-
 const fmtDateTime = (d) => d ? new Date(d).toLocaleString("vi-VN") : "—";
 
 const STATUS_META = {
-  holding:   { label:"Chờ thanh toán", color:"text-yellow-600 dark:text-yellow-400", bg:"bg-yellow-50 dark:bg-yellow-400/10", icon:"💳" },
-  pending:   { label:"Chờ xác nhận",   color:"text-amber-600 dark:text-amber-400",   bg:"bg-amber-50 dark:bg-amber-400/10",   icon:"⏳" },
-  confirmed: { label:"Đã xác nhận",    color:"text-blue-600 dark:text-blue-400",     bg:"bg-blue-50 dark:bg-blue-400/10",     icon:"✅" },
-  completed: { label:"Hoàn thành",     color:"text-gray-600 dark:text-slate-300",    bg:"bg-gray-50 dark:bg-slate-800",       icon:"🏁" },
-  cancelled: { label:"Đã huỷ",         color:"text-red-600 dark:text-red-400",       bg:"bg-red-50 dark:bg-red-400/10",       icon:"❌" },
-  no_show:   { label:"Không đến",      color:"text-red-600 dark:text-red-400",       bg:"bg-red-50 dark:bg-red-400/10",       icon:"🚫" },
+  holding:   { label:"Waiting for payment", color:"text-yellow-600 dark:text-yellow-400", bg:"bg-yellow-50 dark:bg-yellow-400/10", icon:"💳" },
+  pending:   { label:"Waiting for confirmation", color:"text-amber-600 dark:text-amber-400", bg:"bg-amber-50 dark:bg-amber-400/10", icon:"⏳" },
+  confirmed: { label:"Confirmed", color:"text-blue-600 dark:text-blue-400", bg:"bg-blue-50 dark:bg-blue-400/10", icon:"✅" },
+  completed: { label:"Completed", color:"text-gray-600 dark:text-slate-300", bg:"bg-gray-50 dark:bg-slate-800", icon:"🏁" },
+  cancelled: { label:"Cancelled", color:"text-red-600 dark:text-red-400", bg:"bg-red-50 dark:bg-red-400/10", icon:"❌" },
+  no_show:   { label:"No Show", color:"text-red-600 dark:text-red-400", bg:"bg-red-50 dark:bg-red-400/10", icon:"🚫" },
 };
 
 const TOUR_STATUS_META = {
-  booked:    { label:"Đã đặt · Chờ khởi hành", color:"text-blue-600 dark:text-blue-400",     bg:"bg-blue-50 dark:bg-blue-400/10",     icon:"🗓️" },
-  ongoing:   { label:"Đang diễn ra",            color:"text-emerald-600 dark:text-emerald-400", bg:"bg-emerald-50 dark:bg-emerald-400/10", icon:"🚀" },
-  completed: { label:"Tour hoàn thành",         color:"text-gray-600 dark:text-slate-300",    bg:"bg-gray-50 dark:bg-slate-800",       icon:"🏆" },
-  failed:    { label:"Tour thất bại",           color:"text-red-600 dark:text-red-400",       bg:"bg-red-50 dark:bg-red-400/10",       icon:"⚠️" },
+  booked:    { label:"Booked · Waiting to start", color:"text-blue-600 dark:text-blue-400",     bg:"bg-blue-50 dark:bg-blue-400/10",     icon:"🗓️" },
+  ongoing:   { label:"Ongoing",            color:"text-emerald-600 dark:text-emerald-400", bg:"bg-emerald-50 dark:bg-emerald-400/10", icon:"🚀" },
+  completed: { label:"Tour Completed",         color:"text-gray-600 dark:text-slate-300",    bg:"bg-gray-50 dark:bg-slate-800",       icon:"🏆" },
+  failed:    { label:"Tour Failed",           color:"text-red-600 dark:text-red-400",       bg:"bg-red-50 dark:bg-red-400/10",       icon:"⚠️" },
 };
 
 function InfoRow({ label, value }) {
@@ -63,8 +63,8 @@ export default function CompanyTourBookingDetailPage() {
     try {
       await api.patch(`/bookings/${orderId}/${endpoint}`, body);
       await fetchOrder();
-      showToast("✅ Thành công");
-    } catch (e) { showToast(e.response?.data?.message || "Lỗi"); }
+      showToast("✅ Action successful");
+    } catch (e) { showToast(e.response?.data?.message || "Action failed"); }
     finally { setActionLoading(false); }
   };
 
@@ -94,7 +94,7 @@ export default function CompanyTourBookingDetailPage() {
         <div className="max-w-2xl mx-auto px-5 py-4 flex items-center gap-4">
           <button onClick={() => navigate(-1)}
             className="text-gray-400 hover:text-gray-700 dark:hover:text-white">←</button>
-          <h1 className="font-bold text-gray-900 dark:text-white flex-1">Chi tiết Tour Booking</h1>
+          <h1 className="font-bold text-gray-900 dark:text-white flex-1">Tour Booking Detail</h1>
           <span className="text-xs text-gray-400 dark:text-slate-500 font-mono">
             #{orderId?.slice(-8).toUpperCase()}
           </span>
@@ -120,17 +120,17 @@ export default function CompanyTourBookingDetailPage() {
               <p className={`font-semibold text-sm ${ts.color}`}>{ts.label}</p>
               {order.tourStartedAt && (
                 <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
-                  Bắt đầu: {fmtDateTime(order.tourStartedAt)}
+                  Start: {fmtDateTime(order.tourStartedAt)}
                 </p>
               )}
               {order.tourCompletedAt && (
                 <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
-                  Hoàn thành: {fmtDateTime(order.tourCompletedAt)}
+                  Completed: {fmtDateTime(order.tourCompletedAt)}
                 </p>
               )}
               {order.tourStatus === "booked" && hoursUntilDep !== null && hoursUntilDep > 0 && (
                 <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
-                  Còn {Math.round(hoursUntilDep)}h đến giờ khởi hành
+                  Remaining: {Math.round(hoursUntilDep)}h until departure
                 </p>
               )}
             </div>
@@ -149,7 +149,7 @@ export default function CompanyTourBookingDetailPage() {
             <p className="font-bold text-gray-900 dark:text-white text-base">{tp?.title ?? "Tour Product"}</p>
             {tp?.duration && (
               <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-                🗓️ {tp.duration.days} ngày {tp.duration.nights} đêm
+                🗓️ {tp.duration.days} days {tp.duration.nights} nights
               </p>
             )}
           </div>
@@ -158,36 +158,36 @@ export default function CompanyTourBookingDetailPage() {
         {/* Departure */}
         <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4">
           <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3">
-            Lịch khởi hành
+            Departure Schedule
           </p>
-          <InfoRow label="Khởi hành" value={fmtDate(dep?.departureDate ?? d.departureDate)}/>
-          <InfoRow label="Về"        value={fmtShort(dep?.returnDate ?? d.returnDate)}/>
-          {dep && <InfoRow label="Tình trạng slot" value={`${dep.bookedSlots ?? 0}/${dep.maxSlots ?? 0} đã đặt`}/>}
+          <InfoRow label="Departure" value={fmtDate(dep?.departureDate ?? d.departureDate)}/>
+          <InfoRow label="Return"        value={fmtShort(dep?.returnDate ?? d.returnDate)}/>
+          {dep && <InfoRow label="Slot Status" value={`${dep.bookedSlots ?? 0}/${dep.maxSlots ?? 0} booked`}/>}
         </div>
 
         {/* Booking details */}
         <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4">
           <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3">
-            Chi tiết đặt chỗ
+            Booking Details
           </p>
-          <InfoRow label="Người lớn"  value={`${d.adults ?? 1} người`}/>
-          {(d.children ?? 0) > 0 && <InfoRow label="Trẻ em" value={`${d.children} người`}/>}
-          <InfoRow label="Tổng khách" value={`${(d.adults ?? 1) + (d.children ?? 0)} người`}/>
-          <InfoRow label="Giá/người"  value={fmtVND(d.pricePerPerson)}/>
+          <InfoRow label="Adults"  value={`${d.adults ?? 1} people`}/>
+          {(d.children ?? 0) > 0 && <InfoRow label="Children" value={`${d.children} people`}/>}
+          <InfoRow label="Total Guests" value={`${(d.adults ?? 1) + (d.children ?? 0)} people`}/>
+          <InfoRow label="Price/Person"  value={fmtVND(d.pricePerPerson)}/>
           {(d.children ?? 0) > 0 && d.childPrice > 0 && (
-            <InfoRow label="Giá trẻ em" value={fmtVND(d.childPrice)}/>
+            <InfoRow label="Child Price" value={fmtVND(d.childPrice)}/>
           )}
           <div className="flex justify-between py-2.5 border-t border-gray-200 dark:border-slate-700 mt-1">
-            <span className="text-sm font-bold text-gray-700 dark:text-slate-300">Tổng tiền</span>
+            <span className="text-sm font-bold text-gray-700 dark:text-slate-300">Total Price</span>
             <span className="text-base font-black text-blue-600 dark:text-blue-400">{fmtVND(d.totalPrice)}</span>
           </div>
-          {d.specialReq && <InfoRow label="Yêu cầu" value={d.specialReq}/>}
+          {d.specialReq && <InfoRow label="Special Request" value={d.specialReq}/>}
         </div>
 
         {/* Meeting point */}
         {(tp?.meetingPoint?.address || d.meetingPoint?.address) && (
           <div className="bg-amber-50 dark:bg-amber-400/10 border border-amber-200 dark:border-amber-400/20 rounded-2xl p-4">
-            <p className="text-sm font-bold text-amber-800 dark:text-amber-300 mb-1">📍 Điểm tập trung</p>
+            <p className="text-sm font-bold text-amber-800 dark:text-amber-300 mb-1">📍 Meeting Point</p>
             <p className="text-sm text-amber-700 dark:text-amber-400">
               {(tp?.meetingPoint ?? d.meetingPoint)?.address}
             </p>
@@ -202,7 +202,7 @@ export default function CompanyTourBookingDetailPage() {
         {/* Includes */}
         {(Array.isArray(tp?.includes) ? tp.includes : Array.isArray(d?.includes) ? d.includes : []).length > 0 && (
           <div className="bg-emerald-50 dark:bg-emerald-400/10 border border-emerald-200 dark:border-emerald-400/20 rounded-2xl p-4">
-            <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300 mb-2">✅ Đã bao gồm</p>
+            <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300 mb-2">✅ Includes</p>
             <ul className="space-y-1">
               {(Array.isArray(tp?.includes) ? tp.includes : Array.isArray(d?.includes) ? d.includes : []).map((item, i) => (
                 <li key={i} className="text-sm text-emerald-700 dark:text-emerald-400">· {item}</li>
@@ -214,10 +214,10 @@ export default function CompanyTourBookingDetailPage() {
         {/* Contact */}
         <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4">
           <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3">
-            Thông tin liên hệ
+            Contact Information
           </p>
-          <InfoRow label="Tên"    value={order.contactName}/>
-          <InfoRow label="SĐT"    value={order.contactPhone}/>
+          <InfoRow label="Name"    value={order.contactName}/>
+          <InfoRow label="Phone"    value={order.contactPhone}/>
           <InfoRow label="Email"  value={order.contactEmail}/>
           {order.user && (
             <div className="flex justify-between py-2.5 border-b border-gray-100 dark:border-slate-800 last:border-0">
@@ -235,13 +235,13 @@ export default function CompanyTourBookingDetailPage() {
         {/* Notes */}
         {order.userNote && (
           <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-2xl px-4 py-3">
-            <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1">Ghi chú từ khách</p>
+            <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1">User Note</p>
             <p className="text-sm text-blue-700 dark:text-blue-300">"{order.userNote}"</p>
           </div>
         )}
         {order.rejectionReason && (
           <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-2xl px-4 py-3">
-            <p className="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">Lý do từ chối</p>
+            <p className="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">Rejection Reason</p>
             <p className="text-sm text-red-600 dark:text-red-300">{order.rejectionReason}</p>
           </div>
         )}
@@ -252,13 +252,13 @@ export default function CompanyTourBookingDetailPage() {
             <button onClick={() => doAction("confirm")} disabled={actionLoading}
               className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl
                          text-sm font-bold transition-colors disabled:opacity-50">
-              ✅ Xác nhận booking
+              ✅ Confirm Booking
             </button>
             <button onClick={() => setRejectOpen(true)} disabled={actionLoading}
               className="flex-1 py-3.5 border border-red-200 dark:border-red-500/30 text-red-600
                          dark:text-red-400 rounded-xl text-sm font-medium hover:bg-red-50
                          dark:hover:bg-red-500/10 transition-colors disabled:opacity-50">
-              ❌ Từ chối
+              ❌ Reject Booking
             </button>
           </div>
         )}
@@ -271,11 +271,11 @@ export default function CompanyTourBookingDetailPage() {
               <div className="rounded-2xl border border-blue-200 dark:border-blue-500/30
                               bg-blue-50 dark:bg-blue-500/10 px-5 py-4 text-center">
                 <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
-                  🗓️ Tour sẽ khởi hành{" "}
-                  {depDate ? `ngày ${depDate.toLocaleDateString("vi-VN")}` : ""}
+                  🗓️ Tour will start on{" "}
+                  {depDate ? ` ${depDate.toLocaleDateString("vi-VN")}` : ""}
                 </p>
                 <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">
-                  Nút "Bắt đầu tour" sẽ xuất hiện trong vòng 24h trước giờ khởi hành
+                  The "Start Tour" button will appear within 24 hours of the departure time
                 </p>
               </div>
             )}
@@ -286,13 +286,13 @@ export default function CompanyTourBookingDetailPage() {
                 <button onClick={() => doAction("start-tour")} disabled={actionLoading}
                   className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl
                              text-sm font-bold transition-colors disabled:opacity-50">
-                  🚀 Bắt đầu tour
+                  🚀 Start Tour
                 </button>
                 <button onClick={() => setFailOpen(true)} disabled={actionLoading}
                   className="py-3.5 px-4 border border-red-200 dark:border-red-500/30 text-red-600
                              dark:text-red-400 rounded-xl text-sm font-medium hover:bg-red-50
                              dark:hover:bg-red-500/10 transition-colors disabled:opacity-50">
-                  ⚠️ Báo sự cố
+                  ⚠️ Report Issue
                 </button>
               </div>
             )}
@@ -303,13 +303,13 @@ export default function CompanyTourBookingDetailPage() {
                 <button onClick={() => doAction("complete-tour")} disabled={actionLoading}
                   className="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl
                              text-sm font-bold transition-colors disabled:opacity-50">
-                  🏆 Hoàn thành tour
+                  🏆 Complete Tour
                 </button>
                 <button onClick={() => setFailOpen(true)} disabled={actionLoading}
                   className="py-3.5 px-4 border border-red-200 dark:border-red-500/30 text-red-600
                              dark:text-red-400 rounded-xl text-sm font-medium hover:bg-red-50
                              dark:hover:bg-red-500/10 transition-colors disabled:opacity-50">
-                  ⚠️ Báo sự cố
+                  ⚠️ Report Issue
                 </button>
               </div>
             )}
@@ -319,7 +319,7 @@ export default function CompanyTourBookingDetailPage() {
               <div className="rounded-2xl border border-gray-200 dark:border-slate-700
                               bg-gray-50 dark:bg-slate-800 px-5 py-4 text-center">
                 <p className="text-sm text-gray-500 dark:text-slate-400">
-                  🏆 Tour đã hoàn thành thành công
+                  🏆 Tour has been completed successfully
                 </p>
               </div>
             )}
@@ -329,7 +329,7 @@ export default function CompanyTourBookingDetailPage() {
               <div className="rounded-2xl border border-red-200 dark:border-red-500/30
                               bg-red-50 dark:bg-red-500/10 px-5 py-4">
                 <p className="text-sm font-semibold text-red-600 dark:text-red-400 mb-1">
-                  ⚠️ Tour đã gặp sự cố
+                  ⚠️ Tour has encountered an issue and is marked as failed
                 </p>
                 <p className="text-sm text-red-500 dark:text-red-400">
                   {order.tourFailReason}
@@ -344,7 +344,7 @@ export default function CompanyTourBookingDetailPage() {
               <button onClick={() => doAction("complete")} disabled={actionLoading}
                 className="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl
                            text-sm font-bold transition-colors disabled:opacity-50">
-                🏁 Hoàn thành
+                🏁 Complete
               </button>
               <button onClick={() => doAction("no-show")} disabled={actionLoading}
                 className="flex-1 py-3.5 border border-gray-200 dark:border-slate-700 text-gray-500
@@ -363,9 +363,9 @@ export default function CompanyTourBookingDetailPage() {
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setRejectOpen(false)}/>
           <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-gray-200
                           dark:border-slate-700 rounded-2xl shadow-2xl p-6">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Lý do từ chối</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Rejection Reason</h3>
             <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)}
-              rows={3} placeholder="Nhập lý do để khách biết..."
+              rows={3} placeholder="Enter reason for rejection..."
               className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700
                          text-gray-900 dark:text-white rounded-xl px-4 py-3 text-sm resize-none
                          focus:outline-none focus:ring-2 focus:ring-red-500/30 mb-4"/>
@@ -373,13 +373,13 @@ export default function CompanyTourBookingDetailPage() {
               <button onClick={() => setRejectOpen(false)}
                 className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700
                            text-gray-600 dark:text-slate-300 text-sm hover:bg-gray-50 dark:hover:bg-slate-800">
-                Huỷ
+                Cancel
               </button>
               <button onClick={() => { setRejectOpen(false); doAction("reject", { rejectionReason: rejectReason }); }}
                 disabled={actionLoading}
                 className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white
                            text-sm font-medium disabled:opacity-50">
-                Xác nhận
+                Confirm
               </button>
             </div>
           </div>
@@ -392,12 +392,12 @@ export default function CompanyTourBookingDetailPage() {
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setFailOpen(false)}/>
           <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-gray-200
                           dark:border-slate-700 rounded-2xl shadow-2xl p-6">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Báo cáo sự cố tour</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Report Tour Issue</h3>
             <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">
-              Hành động này sẽ đánh dấu tour là thất bại và thông báo cho khách.
+              This action will mark the tour as failed and notify the customer.
             </p>
             <textarea value={failReason} onChange={e => setFailReason(e.target.value)}
-              rows={3} placeholder="Mô tả sự cố (vd: xe bị hỏng, địa điểm đóng cửa...)"
+              rows={3} placeholder="Describe the issue (e.g., vehicle breakdown, venue closure...)"
               className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700
                          text-gray-900 dark:text-white rounded-xl px-4 py-3 text-sm resize-none
                          focus:outline-none focus:ring-2 focus:ring-red-500/30 mb-4"/>
@@ -405,7 +405,7 @@ export default function CompanyTourBookingDetailPage() {
               <button onClick={() => { setFailOpen(false); setFailReason(""); }}
                 className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700
                            text-gray-600 dark:text-slate-300 text-sm hover:bg-gray-50 dark:hover:bg-slate-800">
-                Huỷ
+                Cancel
               </button>
               <button
                 onClick={() => {
@@ -416,7 +416,7 @@ export default function CompanyTourBookingDetailPage() {
                 disabled={actionLoading || !failReason.trim()}
                 className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white
                            text-sm font-medium disabled:opacity-50">
-                Xác nhận sự cố
+                Confirm Report Issue
               </button>
             </div>
           </div>

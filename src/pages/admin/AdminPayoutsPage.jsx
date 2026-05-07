@@ -51,10 +51,10 @@ function ReleaseModal({ payout, open, onClose, onDone }) {
       await api.patch(`/payouts/${payout._id}/release`, {
         releaseMethod: method, releaseRef: ref, note,
       });
-      onDone("✅ Đã release payout thành công");
+      onDone("Release successful");
       onClose();
     } catch (e) {
-      setError(e.response?.data?.message || "Lỗi khi release");
+      setError(e.response?.data?.message || "Release failed");
     } finally { setSaving(false); }
   };
 
@@ -100,7 +100,7 @@ function ReleaseModal({ payout, open, onClose, onDone }) {
               Reference / Transaction No <span className="text-gray-400">(optional)</span>
             </label>
             <input type="text" value={ref} onChange={e => setRef(e.target.value)}
-              placeholder="Mã giao dịch, số bill..."
+              placeholder="Payment reference or transaction number"
               className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700
                          text-gray-900 dark:text-white rounded-xl px-4 py-2.5 text-sm
                          focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all" />
@@ -111,7 +111,7 @@ function ReleaseModal({ payout, open, onClose, onDone }) {
               Note <span className="text-gray-400">(optional)</span>
             </label>
             <textarea value={note} onChange={e => setNote(e.target.value)}
-              rows={2} placeholder="Ghi chú thêm..."
+              rows={2} placeholder="Additional notes..."
               className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700
                          text-gray-900 dark:text-white rounded-xl px-4 py-2.5 text-sm resize-none
                          focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all" />
@@ -150,10 +150,10 @@ function HoldModal({ payout, open, onClose, onDone }) {
     setSaving(true); setError("");
     try {
       await api.patch(`/payouts/${payout._id}/hold`, { heldReason: reason });
-      onDone("🔒 Đã hold payout");
+      onDone("🔒 Payout held successfully");
       onClose();
     } catch (e) {
-      setError(e.response?.data?.message || "Lỗi");
+      setError(e.response?.data?.message || "Hold failed");
     } finally { setSaving(false); }
   };
 
@@ -178,7 +178,7 @@ function HoldModal({ payout, open, onClose, onDone }) {
               Reason <span className="text-gray-400">(optional)</span>
             </label>
             <textarea value={reason} onChange={e => setReason(e.target.value)}
-              rows={3} placeholder="Lý do hold (dispute, fraud check, ...)"
+              rows={3} placeholder="Reason for holding (dispute, fraud check, ...)"
               className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700
                          text-gray-900 dark:text-white rounded-xl px-4 py-2.5 text-sm resize-none
                          focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all" />
@@ -307,9 +307,9 @@ export default function AdminPayoutsPage() {
   const handleUnhold = async (payout) => {
     try {
       await api.patch(`/payouts/${payout._id}/unhold`);
-      showToast("✅ Đã unhold payout");
+      showToast("✅ Unhold payout successful");
       fetchPayouts(activeTab, page);
-    } catch (e) { showToast(e.response?.data?.message || "Lỗi unhold"); }
+    } catch (e) { showToast(e.response?.data?.message || "Unhold failed"); }
   };
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 3500); };
@@ -324,7 +324,7 @@ export default function AdminPayoutsPage() {
     <div>
       <PageHeader
         title="Payouts"
-        subtitle="Release hoặc giữ thanh toán cho Company"
+        subtitle="Release or hold payouts for Company"
       />
 
       {/* Stats */}
